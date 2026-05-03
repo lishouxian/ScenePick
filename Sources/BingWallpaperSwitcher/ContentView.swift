@@ -119,28 +119,11 @@ private struct WallpaperRow: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            AsyncImage(url: wallpaper.previewURL) { phase in
-                switch phase {
-                case .empty:
-                    ZStack {
-                        Color.secondary.opacity(0.12)
-                        ProgressView()
-                            .controlSize(.small)
-                    }
-                case .success(let image):
-                    image
-                        .resizable()
-                        .scaledToFill()
-                case .failure:
-                    Image(systemName: "photo")
-                        .font(.title2)
-                        .foregroundStyle(.secondary)
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        .background(Color.secondary.opacity(0.12))
-                @unknown default:
-                    EmptyView()
-                }
-            }
+            CachedWallpaperImage(
+                wallpaper: wallpaper,
+                resolution: .preview,
+                contentMode: .fill
+            )
             .frame(width: 86, height: 52)
             .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
 
@@ -213,8 +196,7 @@ private struct WallpaperDetailView: View {
                         isLoading: store.isLoading,
                         isSetting: store.isSettingDesktop,
                         statusMessage: store.statusMessage,
-                        errorMessage: store.errorMessage,
-                        downloadProgress: store.desktopDownloadProgress
+                        errorMessage: store.errorMessage
                     )
                 }
                 .padding(24)
@@ -251,8 +233,7 @@ private struct WallpaperPreview: View {
                 CachedWallpaperImage(
                     wallpaper: wallpaper,
                     resolution: .preview,
-                    contentMode: .fill,
-                    showsProgress: true
+                    contentMode: .fill
                 )
                 .frame(width: geometry.size.width, height: geometry.size.height)
                 .clipped()
@@ -306,64 +287,32 @@ private struct StatusMessageView: View {
     let isSetting: Bool
     let statusMessage: String?
     let errorMessage: String?
-    let downloadProgress: WallpaperDownloadProgress?
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            HStack(spacing: 8) {
-                if isLoading || isSetting {
-                    ProgressView()
-                        .controlSize(.small)
-                }
-
-                Text(message)
-                    .font(.footnote)
-                    .foregroundColor(errorMessage == nil ? .secondary : .red)
-                    .lineLimit(2)
-
-                Spacer()
-
-                if let percentageText {
-                    Text(percentageText)
-                        .font(.caption.monospacedDigit())
-                        .foregroundColor(.secondary)
-                }
+        HStack(spacing: 8) {
+            if isLoading || isSetting {
+                ProgressView()
+                    .controlSize(.small)
             }
 
-            if let downloadProgress {
-                if let fraction = downloadProgress.fractionCompleted {
-                    ProgressView(value: fraction, total: 1)
-                        .progressViewStyle(.linear)
-                } else {
-                    ProgressView()
-                        .progressViewStyle(.linear)
-                }
-            }
+            Text(message)
+                .font(.footnote)
+                .foregroundColor(errorMessage == nil ? .secondary : .red)
+                .lineLimit(2)
+
+            Spacer()
         }
-        .frame(minHeight: 28)
+        .frame(minHeight: 24)
     }
 
     private var message: String {
-        if let errorMessage {
-            return errorMessage
-        }
-
+        if let errorMessage { return errorMessage }
         if isSetting {
             return statusMessage ?? "Downloading and applying wallpaper."
         }
-
         if isLoading {
             return "Refreshing Bing archive."
         }
-
         return statusMessage ?? "Ready."
-    }
-
-    private var percentageText: String? {
-        guard let fraction = downloadProgress?.fractionCompleted else {
-            return nil
-        }
-
-        return "\(Int((fraction * 100).rounded()))%"
     }
 }

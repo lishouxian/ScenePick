@@ -12,6 +12,8 @@ A native macOS SwiftUI app for browsing the latest Bing daily wallpapers, previe
 - Switch the macOS desktop wallpaper from the main window or menu bar.
 - Cache downloaded wallpaper files under Application Support.
 - Optional launch behavior to set the latest Bing wallpaper automatically.
+- Optional LaunchAgent to update the latest wallpaper every day in the background.
+- Optional Dock and menu bar visibility controls.
 - Native settings window for region, quality, scaling mode, and cache management.
 
 ## Development

@@ -4,10 +4,20 @@ import SwiftUI
 @main
 struct BingWallpaperSwitcherApp: App {
     @StateObject private var store = WallpaperStore()
-    @AppStorage("selectedMarket") private var selectedMarketRaw = BingMarket.china.rawValue
-    @AppStorage("selectedResolution") private var selectedResolutionRaw = WallpaperResolution.uhd.rawValue
-    @AppStorage("fillMode") private var fillModeRaw = WallpaperFillMode.fillScreen.rawValue
-    @AppStorage("autoSetLatestOnLaunch") private var autoSetLatestOnLaunch = false
+    @AppStorage(BingWallpaperDefaultKeys.selectedMarket, store: BingWallpaperDefaults.store)
+    private var selectedMarketRaw = BingMarket.china.rawValue
+    @AppStorage(BingWallpaperDefaultKeys.selectedResolution, store: BingWallpaperDefaults.store)
+    private var selectedResolutionRaw = WallpaperResolution.uhd.rawValue
+    @AppStorage(BingWallpaperDefaultKeys.fillMode, store: BingWallpaperDefaults.store)
+    private var fillModeRaw = WallpaperFillMode.fillScreen.rawValue
+    @AppStorage(BingWallpaperDefaultKeys.autoSetLatestOnLaunch, store: BingWallpaperDefaults.store)
+    private var autoSetLatestOnLaunch = false
+    @AppStorage(BingWallpaperDefaultKeys.dailyAutoUpdateEnabled, store: BingWallpaperDefaults.store)
+    private var dailyAutoUpdateEnabled = false
+    @AppStorage(BingWallpaperDefaultKeys.showDockIcon, store: BingWallpaperDefaults.store)
+    private var showDockIcon = true
+    @AppStorage(BingWallpaperDefaultKeys.showMenuBarIcon, store: BingWallpaperDefaults.store)
+    private var showMenuBarIcon = true
 
     private var selectedMarket: BingMarket {
         BingMarket(rawValue: selectedMarketRaw) ?? .china
@@ -31,6 +41,15 @@ struct BingWallpaperSwitcherApp: App {
                 autoSetLatestOnLaunch: $autoSetLatestOnLaunch
             )
             .frame(minWidth: 980, minHeight: 640)
+            .onAppear {
+                ApplicationVisibilityController.apply(showDockIcon: showDockIcon)
+                if dailyAutoUpdateEnabled {
+                    try? DailyWallpaperScheduler.install(appBundleURL: Bundle.main.bundleURL)
+                }
+            }
+            .onChange(of: showDockIcon) { visible in
+                ApplicationVisibilityController.apply(showDockIcon: visible)
+            }
             .task {
                 await store.load(market: selectedMarket)
                 if autoSetLatestOnLaunch {
@@ -43,7 +62,11 @@ struct BingWallpaperSwitcherApp: App {
             }
         }
 
-        MenuBarExtra("Bing Wallpaper", systemImage: "photo.on.rectangle.angled") {
+        MenuBarExtra(
+            "Bing Wallpaper",
+            systemImage: "photo.on.rectangle.angled",
+            isInserted: $showMenuBarIcon
+        ) {
             MenuBarContentView(
                 store: store,
                 market: selectedMarket,
@@ -58,7 +81,10 @@ struct BingWallpaperSwitcherApp: App {
                 selectedMarketRaw: $selectedMarketRaw,
                 selectedResolutionRaw: $selectedResolutionRaw,
                 fillModeRaw: $fillModeRaw,
-                autoSetLatestOnLaunch: $autoSetLatestOnLaunch
+                autoSetLatestOnLaunch: $autoSetLatestOnLaunch,
+                dailyAutoUpdateEnabled: $dailyAutoUpdateEnabled,
+                showDockIcon: $showDockIcon,
+                showMenuBarIcon: $showMenuBarIcon
             )
         }
     }

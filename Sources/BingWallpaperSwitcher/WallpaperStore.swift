@@ -10,7 +10,6 @@ final class WallpaperStore: ObservableObject {
     @Published private(set) var isSettingDesktop = false
     @Published private(set) var activeMarket: BingMarket?
     @Published private(set) var loadingMarket: BingMarket?
-    @Published private(set) var desktopDownloadProgress: WallpaperDownloadProgress?
     @Published var errorMessage: String?
     @Published var statusMessage: String?
 
@@ -174,7 +173,6 @@ final class WallpaperStore: ObservableObject {
     ) async {
         isSettingDesktop = true
         let wasCached = cache.isCached(for: wallpaper, resolution: resolution)
-        desktopDownloadProgress = wasCached ? nil : WallpaperDownloadProgress(completedBytes: 0, totalBytes: nil)
         clearMessages()
         statusMessage = wasCached
             ? "Using cached \(resolution.label) wallpaper."
@@ -184,20 +182,15 @@ final class WallpaperStore: ObservableObject {
         do {
             let fileURL = try await cache.cachedImageURL(
                 for: wallpaper,
-                resolution: resolution,
-                onProgress: { [weak self] progress in
-                    self?.desktopDownloadProgress = progress
-                }
+                resolution: resolution
             )
             try desktopSetter.setDesktopImage(
                 fileURL: fileURL,
                 fillMode: fillMode
             )
 
-            desktopDownloadProgress = nil
             statusMessage = "Set \(wallpaper.displayTitle) as desktop wallpaper."
         } catch {
-            desktopDownloadProgress = nil
             errorMessage = error.localizedDescription
         }
     }
