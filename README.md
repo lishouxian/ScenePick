@@ -7,14 +7,12 @@ A native macOS SwiftUI app for browsing the latest Bing daily wallpapers, previe
 - Browse the latest Bing wallpaper archive by region.
 - Preview the selected wallpaper in UHD, HD 1080p, or preview quality.
 - Cache wallpaper metadata and downloaded images for faster switching.
-- Show download progress when applying HD and UHD wallpapers.
 - Use lightweight cached previews instead of downloading full-resolution images for browsing.
-- Switch the macOS desktop wallpaper from the main window or menu bar.
+- Switch the macOS desktop wallpaper from the main window or status bar menu.
 - Cache downloaded wallpaper files under Application Support.
-- Optional launch behavior to set the latest Bing wallpaper automatically.
-- Optional LaunchAgent to update the latest wallpaper every day in the background.
-- Optional Dock and menu bar visibility controls.
-- Native settings window for region, quality, scaling mode, and cache management.
+- Pure status bar app with no Dock icon.
+- Optional daily update while the app is running.
+- Main-window controls for region, quality, scaling mode, daily update, and cache management.
 
 ## Development
 

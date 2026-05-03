@@ -3,13 +3,11 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 PRODUCT_NAME="BingWallpaperSwitcher"
-AGENT_NAME="BingWallpaperAgent"
 APP_NAME="Bing Wallpaper Switcher"
 BUNDLE_ID="com.xian.BingWallpaperSwitcher"
 
 cd "$ROOT_DIR"
 swift build -c release --product "$PRODUCT_NAME"
-swift build -c release --product "$AGENT_NAME"
 
 if [ ! -f "$ROOT_DIR/Resources/AppIcon.icns" ]; then
   swift Scripts/generate-icon.swift
@@ -24,7 +22,6 @@ RESOURCES_DIR="$CONTENTS_DIR/Resources"
 rm -rf "$APP_DIR"
 mkdir -p "$MACOS_DIR" "$RESOURCES_DIR"
 cp "$BIN_DIR/$PRODUCT_NAME" "$MACOS_DIR/$PRODUCT_NAME"
-cp "$BIN_DIR/$AGENT_NAME" "$MACOS_DIR/$AGENT_NAME"
 if [ -f "$ROOT_DIR/Resources/AppIcon.icns" ]; then
   cp "$ROOT_DIR/Resources/AppIcon.icns" "$RESOURCES_DIR/AppIcon.icns"
 fi
@@ -56,6 +53,8 @@ cat > "$CONTENTS_DIR/Info.plist" <<PLIST
   <string>1</string>
   <key>LSMinimumSystemVersion</key>
   <string>13.0</string>
+  <key>LSUIElement</key>
+  <true/>
   <key>NSHighResolutionCapable</key>
   <true/>
   <key>NSPrincipalClass</key>

@@ -4,10 +4,8 @@ public enum BingWallpaperDefaultKeys {
     public static let selectedMarket = "selectedMarket"
     public static let selectedResolution = "selectedResolution"
     public static let fillMode = "fillMode"
-    public static let autoSetLatestOnLaunch = "autoSetLatestOnLaunch"
     public static let dailyAutoUpdateEnabled = "dailyAutoUpdateEnabled"
-    public static let showDockIcon = "showDockIcon"
-    public static let showMenuBarIcon = "showMenuBarIcon"
+    public static let lastDailyUpdateDate = "lastDailyUpdateDate"
 }
 
 public enum BingWallpaperDefaults {

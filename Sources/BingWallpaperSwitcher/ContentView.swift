@@ -1,3 +1,4 @@
+import AppKit
 import BingWallpapersCore
 import SwiftUI
 
@@ -6,7 +7,8 @@ struct ContentView: View {
     @Binding var selectedMarketRaw: String
     @Binding var selectedResolutionRaw: String
     @Binding var fillModeRaw: String
-    @Binding var autoSetLatestOnLaunch: Bool
+    @Binding var dailyAutoUpdateEnabled: Bool
+    @State private var cacheMessage: String?
 
     private var selectedMarket: BingMarket {
         BingMarket(rawValue: selectedMarketRaw) ?? .china
@@ -31,38 +33,37 @@ struct ContentView: View {
             WallpaperDetailView(
                 store: store,
                 resolution: selectedResolution,
-                fillMode: fillMode
+                fillMode: fillMode,
+                selectedResolutionRaw: $selectedResolutionRaw,
+                fillModeRaw: $fillModeRaw,
+                dailyAutoUpdateEnabled: $dailyAutoUpdateEnabled,
+                selectedMarket: selectedMarket,
+                cacheMessage: cacheMessage,
+                revealCache: revealCache,
+                clearCache: clearCache
             )
-        }
-        .toolbar {
-            ToolbarItemGroup(placement: .primaryAction) {
-                Picker("Quality", selection: $selectedResolutionRaw) {
-                    ForEach(WallpaperResolution.allCases) { resolution in
-                        Text(resolution.label).tag(resolution.rawValue)
-                    }
-                }
-                .pickerStyle(.segmented)
-                .frame(width: 260)
-
-                Picker("Desktop Mode", selection: $fillModeRaw) {
-                    ForEach(WallpaperFillMode.allCases) { mode in
-                        Text(mode.label).tag(mode.rawValue)
-                    }
-                }
-                .pickerStyle(.menu)
-                .frame(width: 130)
-
-                Button {
-                    Task { await store.load(market: selectedMarket, forceRefresh: true) }
-                } label: {
-                    Label("Refresh", systemImage: "arrow.clockwise")
-                }
-                .disabled(store.isLoading)
-            }
         }
         .onChange(of: selectedMarketRaw) { newValue in
             let market = BingMarket(rawValue: newValue) ?? .china
             Task { await store.load(market: market) }
+        }
+        .onChange(of: dailyAutoUpdateEnabled) { _ in
+            InAppDailyWallpaperUpdater.shared.start()
+        }
+    }
+
+    private func revealCache() {
+        NSWorkspace.shared.activateFileViewerSelecting([
+            WallpaperCache.defaultDirectory
+        ])
+    }
+
+    private func clearCache() {
+        do {
+            try WallpaperCache().removeAll()
+            cacheMessage = "Cache cleared."
+        } catch {
+            cacheMessage = error.localizedDescription
         }
     }
 }
@@ -146,13 +147,33 @@ private struct WallpaperDetailView: View {
     @ObservedObject var store: WallpaperStore
     let resolution: WallpaperResolution
     let fillMode: WallpaperFillMode
+    @Binding var selectedResolutionRaw: String
+    @Binding var fillModeRaw: String
+    @Binding var dailyAutoUpdateEnabled: Bool
+    let selectedMarket: BingMarket
+    let cacheMessage: String?
+    let revealCache: () -> Void
+    let clearCache: () -> Void
 
     var body: some View {
-        ZStack {
+        ZStack(alignment: .top) {
             Color(nsColor: .windowBackgroundColor)
 
             if let wallpaper = store.selectedWallpaper {
                 VStack(spacing: 18) {
+                    WallpaperControlBar(
+                        selectedResolutionRaw: $selectedResolutionRaw,
+                        fillModeRaw: $fillModeRaw,
+                        dailyAutoUpdateEnabled: $dailyAutoUpdateEnabled,
+                        isLoading: store.isLoading,
+                        selectedMarket: selectedMarket,
+                        refresh: {
+                            Task { await store.load(market: selectedMarket, forceRefresh: true) }
+                        },
+                        revealCache: revealCache,
+                        clearCache: clearCache
+                    )
+
                     WallpaperPreview(wallpaper: wallpaper)
 
                     HStack(alignment: .center, spacing: 12) {
@@ -174,6 +195,8 @@ private struct WallpaperDetailView: View {
                         }
                         .buttonStyle(.borderedProminent)
                         .controlSize(.large)
+                        .frame(minWidth: 150)
+                        .layoutPriority(1)
                         .disabled(store.isSettingDesktop)
 
                         Button {
@@ -196,7 +219,8 @@ private struct WallpaperDetailView: View {
                         isLoading: store.isLoading,
                         isSetting: store.isSettingDesktop,
                         statusMessage: store.statusMessage,
-                        errorMessage: store.errorMessage
+                        errorMessage: store.errorMessage,
+                        cacheMessage: cacheMessage
                     )
                 }
                 .padding(24)
@@ -204,6 +228,81 @@ private struct WallpaperDetailView: View {
                 EmptyWallpapersView()
             }
         }
+    }
+}
+
+private struct WallpaperControlBar: View {
+    @Binding var selectedResolutionRaw: String
+    @Binding var fillModeRaw: String
+    @Binding var dailyAutoUpdateEnabled: Bool
+    let isLoading: Bool
+    let selectedMarket: BingMarket
+    let refresh: () -> Void
+    let revealCache: () -> Void
+    let clearCache: () -> Void
+
+    var body: some View {
+        HStack(spacing: 12) {
+            Picker("Quality", selection: $selectedResolutionRaw) {
+                ForEach(WallpaperResolution.allCases) { resolution in
+                    Text(resolution.label).tag(resolution.rawValue)
+                }
+            }
+            .pickerStyle(.segmented)
+            .frame(width: 260)
+
+            Menu {
+                ForEach(WallpaperFillMode.allCases) { mode in
+                    Button {
+                        fillModeRaw = mode.rawValue
+                    } label: {
+                        if mode.rawValue == fillModeRaw {
+                            Label(mode.label, systemImage: "checkmark")
+                        } else {
+                            Text(mode.label)
+                        }
+                    }
+                }
+            } label: {
+                Label(selectedFillMode.label, systemImage: "rectangle.arrowtriangle.2.outward")
+            }
+
+            Spacer(minLength: 8)
+
+            Toggle(isOn: $dailyAutoUpdateEnabled) {
+                Label("Daily", systemImage: "calendar.badge.clock")
+            }
+            .toggleStyle(.button)
+            .help("Update the latest wallpaper daily while the app is running.")
+
+            Menu {
+                Button {
+                    revealCache()
+                } label: {
+                    Label("Reveal Cache", systemImage: "folder")
+                }
+
+                Button(role: .destructive) {
+                    clearCache()
+                } label: {
+                    Label("Clear Cache", systemImage: "trash")
+                }
+            } label: {
+                Label("More", systemImage: "ellipsis.circle")
+            }
+
+            Button {
+                refresh()
+            } label: {
+                Label("Refresh", systemImage: "arrow.clockwise")
+            }
+            .disabled(isLoading)
+            .help("Refresh \(selectedMarket.label) wallpapers.")
+        }
+    }
+
+    private var selectedFillMode: WallpaperFillMode {
+        WallpaperFillMode(rawValue: fillModeRaw) ?? .fillScreen
     }
 }
 
@@ -287,6 +386,7 @@ private struct StatusMessageView: View {
     let isSetting: Bool
     let statusMessage: String?
     let errorMessage: String?
+    let cacheMessage: String?
 
     var body: some View {
         HStack(spacing: 8) {
@@ -313,6 +413,6 @@ private struct StatusMessageView: View {
         if isLoading {
             return "Refreshing Bing archive."
         }
-        return statusMessage ?? "Ready."
+        return cacheMessage ?? statusMessage ?? "Ready."
     }
 }

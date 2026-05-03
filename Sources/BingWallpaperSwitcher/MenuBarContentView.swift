@@ -1,3 +1,4 @@
+import AppKit
 import BingWallpapersCore
 import SwiftUI
 
@@ -7,19 +8,12 @@ struct MenuBarContentView: View {
     let resolution: WallpaperResolution
     let fillMode: WallpaperFillMode
     let openApp: () -> Void
-    let openPreferences: () -> Void
 
     var body: some View {
         Button {
             openApp()
         } label: {
             Label("Open App", systemImage: "macwindow")
-        }
-
-        Button {
-            openPreferences()
-        } label: {
-            Label("Open Settings", systemImage: "gearshape")
         }
 
         Divider()
@@ -54,11 +48,19 @@ struct MenuBarContentView: View {
         Divider()
 
         Button {
-            Task { await store.load(market: market) }
+            Task { await store.load(market: market, forceRefresh: true) }
         } label: {
             Label("Refresh Archive", systemImage: "arrow.clockwise")
         }
         .disabled(store.isLoading)
+
+        Divider()
+
+        Button {
+            NSApp.terminate(nil)
+        } label: {
+            Label("Quit", systemImage: "power")
+        }
 
         if let errorMessage = store.errorMessage {
             Divider()

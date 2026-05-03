@@ -17,10 +17,6 @@ let package = Package(
             targets: ["BingWallpaperSwitcher"]
         ),
         .executable(
-            name: "BingWallpaperAgent",
-            targets: ["BingWallpaperAgent"]
-        ),
-        .executable(
             name: "BingWallpapersCoreSelfTest",
             targets: ["BingWallpapersCoreSelfTest"]
         )
@@ -31,10 +27,6 @@ let package = Package(
         ),
         .executableTarget(
             name: "BingWallpaperSwitcher",
-            dependencies: ["BingWallpapersCore"]
-        ),
-        .executableTarget(
-            name: "BingWallpaperAgent",
             dependencies: ["BingWallpapersCore"]
         ),
         .executableTarget(
