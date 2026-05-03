@@ -1,8 +1,9 @@
+import AppKit
 import BingWallpapersCore
 import SwiftUI
 
 @main
-struct BingWallpaperSwitcherApp: App {
+struct ScenePickApp: App {
     @NSApplicationDelegateAdaptor(AppLifecycleDelegate.self) private var appDelegate
     @Environment(\.openWindow) private var openWindow
     @StateObject private var store = WallpaperStore()
@@ -28,7 +29,7 @@ struct BingWallpaperSwitcherApp: App {
     }
 
     var body: some Scene {
-        Window("Bing Wallpaper Switcher", id: "main") {
+        Window(L10n.string("app.name"), id: "main") {
             ContentView(
                 store: store,
                 selectedMarketRaw: $selectedMarketRaw,
@@ -44,7 +45,7 @@ struct BingWallpaperSwitcherApp: App {
         .defaultSize(width: 1240, height: 660)
 
         MenuBarExtra(
-            "Bing Wallpaper",
+            L10n.string("app.name"),
             systemImage: "photo.on.rectangle.angled"
         ) {
             MenuBarContentView(
@@ -52,8 +53,9 @@ struct BingWallpaperSwitcherApp: App {
                 market: selectedMarket,
                 resolution: selectedResolution,
                 fillMode: fillMode,
+                dailyAutoUpdateEnabled: $dailyAutoUpdateEnabled,
                 openApp: {
-                    ApplicationVisibilityController.activate()
+                    NSApp.activate(ignoringOtherApps: true)
                     openWindow(id: "main")
                 }
             )

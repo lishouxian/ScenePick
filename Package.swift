@@ -3,7 +3,8 @@
 import PackageDescription
 
 let package = Package(
-    name: "BingWallpaperSwitcher",
+    name: "ScenePick",
+    defaultLocalization: "en",
     platforms: [
         .macOS(.v13)
     ],
@@ -13,8 +14,8 @@ let package = Package(
             targets: ["BingWallpapersCore"]
         ),
         .executable(
-            name: "BingWallpaperSwitcher",
-            targets: ["BingWallpaperSwitcher"]
+            name: "ScenePick",
+            targets: ["ScenePick"]
         ),
         .executable(
             name: "BingWallpapersCoreSelfTest",
@@ -23,11 +24,13 @@ let package = Package(
     ],
     targets: [
         .target(
-            name: "BingWallpapersCore"
+            name: "BingWallpapersCore",
+            resources: [.process("Resources")]
         ),
         .executableTarget(
-            name: "BingWallpaperSwitcher",
-            dependencies: ["BingWallpapersCore"]
+            name: "ScenePick",
+            dependencies: ["BingWallpapersCore"],
+            resources: [.process("Resources")]
         ),
         .executableTarget(
             name: "BingWallpapersCoreSelfTest",

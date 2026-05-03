@@ -8,7 +8,6 @@ struct ContentView: View {
     @Binding var selectedResolutionRaw: String
     @Binding var fillModeRaw: String
     @Binding var dailyAutoUpdateEnabled: Bool
-    @State private var cacheMessage: String?
 
     private var selectedMarket: BingMarket {
         BingMarket(rawValue: selectedMarketRaw) ?? .china
@@ -26,22 +25,58 @@ struct ContentView: View {
         NavigationSplitView {
             WallpaperSidebar(
                 store: store,
-                selectedMarketRaw: $selectedMarketRaw
+                selectedMarketRaw: $selectedMarketRaw,
+                dailyAutoUpdateEnabled: $dailyAutoUpdateEnabled
             )
             .navigationSplitViewColumnWidth(min: 280, ideal: 320, max: 380)
         } detail: {
             WallpaperDetailView(
                 store: store,
                 resolution: selectedResolution,
-                fillMode: fillMode,
-                selectedResolutionRaw: $selectedResolutionRaw,
-                fillModeRaw: $fillModeRaw,
-                dailyAutoUpdateEnabled: $dailyAutoUpdateEnabled,
-                selectedMarket: selectedMarket,
-                cacheMessage: cacheMessage,
-                revealCache: revealCache,
-                clearCache: clearCache
+                fillMode: fillMode
             )
+        }
+        .toolbar {
+            ToolbarItemGroup(placement: .primaryAction) {
+                Menu {
+                    Picker(L10n.string("toolbar.wallpaperQuality"), selection: $selectedResolutionRaw) {
+                        ForEach(WallpaperResolution.allCases) { resolution in
+                            Text(resolution.localizedLabel).tag(resolution.rawValue)
+                        }
+                    }
+
+                    Picker(L10n.string("toolbar.fillMode"), selection: $fillModeRaw) {
+                        ForEach(WallpaperFillMode.allCases) { mode in
+                            Text(mode.localizedLabel).tag(mode.rawValue)
+                        }
+                    }
+
+                    Divider()
+
+                    Button {
+                        Task { await store.load(market: selectedMarket, forceRefresh: true) }
+                    } label: {
+                        Label(L10n.string("action.reloadWallpapers"), systemImage: "arrow.clockwise")
+                    }
+                    .disabled(store.isLoading)
+
+                    Divider()
+
+                    Button {
+                        revealCache()
+                    } label: {
+                        Label(L10n.string("action.revealCache"), systemImage: "folder")
+                    }
+
+                    Button(role: .destructive) {
+                        store.clearCache()
+                    } label: {
+                        Label(L10n.string("action.clearCache"), systemImage: "trash")
+                    }
+                } label: {
+                    Label(L10n.string("toolbar.more"), systemImage: "ellipsis.circle")
+                }
+            }
         }
         .onChange(of: selectedMarketRaw) { newValue in
             let market = BingMarket(rawValue: newValue) ?? .china
@@ -58,32 +93,60 @@ struct ContentView: View {
         ])
     }
 
-    private func clearCache() {
-        do {
-            try WallpaperCache().removeAll()
-            cacheMessage = "Cache cleared."
-        } catch {
-            cacheMessage = error.localizedDescription
+}
+
+private struct DailyUpdateSwitchToggleStyle: ToggleStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        Button {
+            withAnimation(.spring(response: 0.22, dampingFraction: 0.86)) {
+                configuration.isOn.toggle()
+            }
+        } label: {
+            ZStack {
+                Capsule()
+                    .fill(configuration.isOn ? Color.accentColor : Color(red: 0.83, green: 0.84, blue: 0.85))
+                    .overlay {
+                        Capsule()
+                            .strokeBorder(Color.black.opacity(configuration.isOn ? 0.0 : 0.06), lineWidth: 1)
+                    }
+                    .shadow(color: .black.opacity(0.08), radius: 1.5, x: 0, y: 1)
+
+                Circle()
+                    .fill(Color.white)
+                    .frame(width: 18, height: 18)
+                    .shadow(color: .black.opacity(0.18), radius: 1.5, x: 0, y: 1)
+                    .padding(3)
+                    .offset(x: configuration.isOn ? 9 : -9)
+            }
+            .frame(width: 42, height: 24)
+            .contentShape(Rectangle())
+            .animation(.spring(response: 0.22, dampingFraction: 0.86), value: configuration.isOn)
         }
+        .buttonStyle(.plain)
+        .accessibilityLabel(L10n.string("accessibility.dailyUpdate"))
+        .accessibilityValue(configuration.isOn ? L10n.string("state.on") : L10n.string("state.off"))
     }
 }
 
 private struct WallpaperSidebar: View {
     @ObservedObject var store: WallpaperStore
     @Binding var selectedMarketRaw: String
+    @Binding var dailyAutoUpdateEnabled: Bool
 
     var body: some View {
         VStack(spacing: 0) {
             VStack(alignment: .leading, spacing: 12) {
-                Text("Bing Wallpapers")
+                Text(L10n.string("app.name"))
                     .font(.title2.weight(.semibold))
 
-                Picker("Region", selection: $selectedMarketRaw) {
+                Picker(L10n.string("sidebar.region"), selection: $selectedMarketRaw) {
                     ForEach(BingMarket.allCases) { market in
-                        Text(market.label).tag(market.rawValue)
+                        Text(market.localizedLabel).tag(market.rawValue)
                     }
                 }
                 .pickerStyle(.menu)
+
+                DailyUpdatePreferenceRow(isOn: $dailyAutoUpdateEnabled)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding([.horizontal, .top], 18)
@@ -107,11 +170,25 @@ private struct WallpaperSidebar: View {
     }
 
     private var loadingText: String {
-        guard let loadingMarket = store.loadingMarket else {
-            return "Loading Bing archive"
-        }
+        L10n.string("loading.bingArchive")
+    }
+}
 
-        return "Loading \(loadingMarket.label)"
+private struct DailyUpdatePreferenceRow: View {
+    @Binding var isOn: Bool
+
+    var body: some View {
+        HStack(spacing: 12) {
+            Text(L10n.string("dailyUpdate.title"))
+                .font(.callout.weight(.medium))
+
+            Spacer()
+
+            Toggle(L10n.string("dailyUpdate.title"), isOn: $isOn)
+                .labelsHidden()
+                .toggleStyle(DailyUpdateSwitchToggleStyle())
+        }
+        .help(L10n.string("dailyUpdate.help"))
     }
 }
 
@@ -129,7 +206,7 @@ private struct WallpaperRow: View {
             .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
 
             VStack(alignment: .leading, spacing: 4) {
-                Text(wallpaper.displayTitle)
+                Text(wallpaper.localizedDisplayTitle)
                     .font(.callout.weight(.medium))
                     .lineLimit(1)
 
@@ -147,13 +224,6 @@ private struct WallpaperDetailView: View {
     @ObservedObject var store: WallpaperStore
     let resolution: WallpaperResolution
     let fillMode: WallpaperFillMode
-    @Binding var selectedResolutionRaw: String
-    @Binding var fillModeRaw: String
-    @Binding var dailyAutoUpdateEnabled: Bool
-    let selectedMarket: BingMarket
-    let cacheMessage: String?
-    let revealCache: () -> Void
-    let clearCache: () -> Void
 
     var body: some View {
         ZStack(alignment: .top) {
@@ -161,26 +231,13 @@ private struct WallpaperDetailView: View {
 
             if let wallpaper = store.selectedWallpaper {
                 VStack(spacing: 18) {
-                    WallpaperControlBar(
-                        selectedResolutionRaw: $selectedResolutionRaw,
-                        fillModeRaw: $fillModeRaw,
-                        dailyAutoUpdateEnabled: $dailyAutoUpdateEnabled,
-                        isLoading: store.isLoading,
-                        selectedMarket: selectedMarket,
-                        refresh: {
-                            Task { await store.load(market: selectedMarket, forceRefresh: true) }
-                        },
-                        revealCache: revealCache,
-                        clearCache: clearCache
-                    )
-
                     WallpaperPreview(wallpaper: wallpaper)
 
                     HStack(alignment: .center, spacing: 12) {
                         Button {
                             store.selectPrevious()
                         } label: {
-                            Label("Previous", systemImage: "chevron.left")
+                            Label(L10n.string("action.previous"), systemImage: "chevron.left")
                         }
 
                         Button {
@@ -191,7 +248,7 @@ private struct WallpaperDetailView: View {
                                 )
                             }
                         } label: {
-                            Label("Set Desktop", systemImage: "desktopcomputer")
+                            Label(L10n.string("action.setDesktop"), systemImage: "desktopcomputer")
                         }
                         .buttonStyle(.borderedProminent)
                         .controlSize(.large)
@@ -202,7 +259,7 @@ private struct WallpaperDetailView: View {
                         Button {
                             store.selectNext()
                         } label: {
-                            Label("Next", systemImage: "chevron.right")
+                            Label(L10n.string("action.next"), systemImage: "chevron.right")
                         }
 
                         Spacer()
@@ -210,7 +267,7 @@ private struct WallpaperDetailView: View {
                         if let copyrightLink = wallpaper.copyrightLink,
                            let url = URL(string: copyrightLink) {
                             Link(destination: url) {
-                                Label("Source", systemImage: "link")
+                                Label(L10n.string("action.source"), systemImage: "link")
                             }
                         }
                     }
@@ -219,8 +276,7 @@ private struct WallpaperDetailView: View {
                         isLoading: store.isLoading,
                         isSetting: store.isSettingDesktop,
                         statusMessage: store.statusMessage,
-                        errorMessage: store.errorMessage,
-                        cacheMessage: cacheMessage
+                        errorMessage: store.errorMessage
                     )
                 }
                 .padding(24)
@@ -231,81 +287,6 @@ private struct WallpaperDetailView: View {
     }
 }
 
-private struct WallpaperControlBar: View {
-    @Binding var selectedResolutionRaw: String
-    @Binding var fillModeRaw: String
-    @Binding var dailyAutoUpdateEnabled: Bool
-    let isLoading: Bool
-    let selectedMarket: BingMarket
-    let refresh: () -> Void
-    let revealCache: () -> Void
-    let clearCache: () -> Void
-
-    var body: some View {
-        HStack(spacing: 12) {
-            Picker("Quality", selection: $selectedResolutionRaw) {
-                ForEach(WallpaperResolution.allCases) { resolution in
-                    Text(resolution.label).tag(resolution.rawValue)
-                }
-            }
-            .pickerStyle(.segmented)
-            .frame(width: 260)
-
-            Menu {
-                ForEach(WallpaperFillMode.allCases) { mode in
-                    Button {
-                        fillModeRaw = mode.rawValue
-                    } label: {
-                        if mode.rawValue == fillModeRaw {
-                            Label(mode.label, systemImage: "checkmark")
-                        } else {
-                            Text(mode.label)
-                        }
-                    }
-                }
-            } label: {
-                Label(selectedFillMode.label, systemImage: "rectangle.arrowtriangle.2.outward")
-            }
-
-            Spacer(minLength: 8)
-
-            Toggle(isOn: $dailyAutoUpdateEnabled) {
-                Label("Daily", systemImage: "calendar.badge.clock")
-            }
-            .toggleStyle(.button)
-            .help("Update the latest wallpaper daily while the app is running.")
-
-            Menu {
-                Button {
-                    revealCache()
-                } label: {
-                    Label("Reveal Cache", systemImage: "folder")
-                }
-
-                Button(role: .destructive) {
-                    clearCache()
-                } label: {
-                    Label("Clear Cache", systemImage: "trash")
-                }
-            } label: {
-                Label("More", systemImage: "ellipsis.circle")
-            }
-
-            Button {
-                refresh()
-            } label: {
-                Label("Refresh", systemImage: "arrow.clockwise")
-            }
-            .disabled(isLoading)
-            .help("Refresh \(selectedMarket.label) wallpapers.")
-        }
-    }
-
-    private var selectedFillMode: WallpaperFillMode {
-        WallpaperFillMode(rawValue: fillModeRaw) ?? .fillScreen
-    }
-}
-
 private struct EmptyWallpapersView: View {
     var body: some View {
         VStack(spacing: 12) {
@@ -313,10 +294,10 @@ private struct EmptyWallpapersView: View {
                 .font(.system(size: 42, weight: .regular))
                 .foregroundColor(.secondary)
 
-            Text("No Wallpapers")
+            Text(L10n.string("empty.title"))
                 .font(.title3.weight(.semibold))
 
-            Text("Refresh to load the latest Bing wallpapers.")
+            Text(L10n.string("empty.subtitle"))
                 .font(.callout)
                 .foregroundColor(.secondary)
         }
@@ -344,7 +325,7 @@ private struct WallpaperPreview: View {
                 )
 
                 VStack(alignment: .leading, spacing: 8) {
-                    Text(wallpaper.displayTitle)
+                    Text(wallpaper.localizedDisplayTitle)
                         .font(.system(.title, design: .rounded, weight: .semibold))
                         .foregroundStyle(.white)
                         .lineLimit(2)
@@ -359,7 +340,7 @@ private struct WallpaperPreview: View {
                 VStack {
                     HStack {
                         Spacer()
-                        Text("Preview")
+                        Text(L10n.string("preview.badge"))
                             .font(.caption.weight(.medium))
                             .foregroundColor(.white.opacity(0.86))
                             .padding(.horizontal, 9)
@@ -386,7 +367,6 @@ private struct StatusMessageView: View {
     let isSetting: Bool
     let statusMessage: String?
     let errorMessage: String?
-    let cacheMessage: String?
 
     var body: some View {
         HStack(spacing: 8) {
@@ -408,11 +388,11 @@ private struct StatusMessageView: View {
     private var message: String {
         if let errorMessage { return errorMessage }
         if isSetting {
-            return statusMessage ?? "Downloading and applying wallpaper."
+            return statusMessage ?? L10n.string("status.downloadingApplying")
         }
         if isLoading {
-            return "Refreshing Bing archive."
+            return L10n.string("status.reloading")
         }
-        return cacheMessage ?? statusMessage ?? "Ready."
+        return statusMessage ?? L10n.string("status.ready")
     }
 }

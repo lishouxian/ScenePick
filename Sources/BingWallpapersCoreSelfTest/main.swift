@@ -134,28 +134,14 @@ struct BingWallpapersCoreSelfTest {
       "images": [
         {
           "startdate": "20260503",
-          "fullstartdate": "202605030700",
-          "enddate": "20260504",
           "url": "/th?id=OHR.DesertGeometry_EN-US1234567890_1366x768.jpg&rf=LaDigue_1366x768.jpg&pid=hp",
           "urlbase": "/th?id=OHR.DesertGeometry_EN-US1234567890",
           "copyright": "Sand dunes at sunrise (Example)",
           "copyrightlink": "https://www.bing.com/search?q=sand+dunes",
           "title": "Desert Geometry",
-          "quiz": "/search?q=desert+quiz",
-          "wp": true,
-          "hsh": "fixturehash",
-          "drk": 1,
-          "top": 1,
-          "bot": 1
+          "hsh": "fixturehash"
         }
-      ],
-      "tooltips": {
-        "loading": "Loading",
-        "previous": "Previous",
-        "next": "Next",
-        "walle": "This image is not available to download as wallpaper.",
-        "walls": "Download this image. Use of this image is restricted to wallpaper only."
-      }
+      ]
     }
     """.utf8)
 

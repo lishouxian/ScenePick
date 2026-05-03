@@ -1,0 +1,7 @@
+"error.invalidURL" = "无法生成有效的 Bing 壁纸 URL。";
+"error.badResponse" = "Bing 返回了无效响应。";
+"error.httpStatus" = "Bing 返回 HTTP %d。";
+"error.emptyArchive" = "Bing 没有返回任何壁纸。";
+"error.invalidImageData" = "下载的壁纸数据不是有效图片。";
+"error.missingCachedFile" = "未找到壁纸文件：%@。";
+"error.noScreensAvailable" = "没有可用于切换壁纸的 macOS 屏幕。";

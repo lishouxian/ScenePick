@@ -2,9 +2,10 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-PRODUCT_NAME="BingWallpaperSwitcher"
-APP_NAME="Bing Wallpaper Switcher"
-BUNDLE_ID="com.xian.BingWallpaperSwitcher"
+PRODUCT_NAME="ScenePick"
+APP_NAME="ScenePick"
+DISPLAY_NAME="拾景"
+BUNDLE_ID="com.xian.ScenePick"
 
 cd "$ROOT_DIR"
 swift build -c release --product "$PRODUCT_NAME"
@@ -25,6 +26,16 @@ cp "$BIN_DIR/$PRODUCT_NAME" "$MACOS_DIR/$PRODUCT_NAME"
 if [ -f "$ROOT_DIR/Resources/AppIcon.icns" ]; then
   cp "$ROOT_DIR/Resources/AppIcon.icns" "$RESOURCES_DIR/AppIcon.icns"
 fi
+find "$BIN_DIR" -maxdepth 1 \( -name "*.bundle" -o -name "*.resources" \) -type d -exec cp -R {} "$RESOURCES_DIR/" \;
+mkdir -p "$RESOURCES_DIR/en.lproj" "$RESOURCES_DIR/zh-Hans.lproj"
+cat > "$RESOURCES_DIR/en.lproj/InfoPlist.strings" <<STRINGS
+"CFBundleDisplayName" = "ScenePick";
+"CFBundleName" = "ScenePick";
+STRINGS
+cat > "$RESOURCES_DIR/zh-Hans.lproj/InfoPlist.strings" <<STRINGS
+"CFBundleDisplayName" = "拾景";
+"CFBundleName" = "拾景";
+STRINGS
 
 cat > "$CONTENTS_DIR/Info.plist" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
@@ -41,8 +52,13 @@ cat > "$CONTENTS_DIR/Info.plist" <<PLIST
   <string>6.0</string>
   <key>CFBundleIconFile</key>
   <string>AppIcon.icns</string>
+  <key>CFBundleLocalizations</key>
+  <array>
+    <string>en</string>
+    <string>zh-Hans</string>
+  </array>
   <key>CFBundleDisplayName</key>
-  <string>${APP_NAME}</string>
+  <string>${DISPLAY_NAME}</string>
   <key>CFBundleName</key>
   <string>${APP_NAME}</string>
   <key>CFBundlePackageType</key>

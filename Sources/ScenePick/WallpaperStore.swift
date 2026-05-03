@@ -8,14 +8,13 @@ final class WallpaperStore: ObservableObject {
     @Published var selectedWallpaperID: BingImage.ID?
     @Published private(set) var isLoading = false
     @Published private(set) var isSettingDesktop = false
-    @Published private(set) var activeMarket: BingMarket?
-    @Published private(set) var loadingMarket: BingMarket?
     @Published var errorMessage: String?
-    @Published var statusMessage: String?
+    @Published private(set) var statusMessage: String?
 
     private let service: BingWallpaperService
     private let cache: WallpaperCache
     private let desktopSetter: DesktopWallpaperSetting
+    private var activeMarket: BingMarket?
     private var activeLoadID: UUID?
     private var archiveCache: [BingMarket: CachedArchive] = [:]
     private var previewPrefetchTask: Task<Void, Never>?
@@ -45,10 +44,9 @@ final class WallpaperStore: ObservableObject {
 
         activeLoadID = loadID
         previewPrefetchTask?.cancel()
-        loadingMarket = market
         isLoading = true
         errorMessage = nil
-        statusMessage = "Loading \(market.label) wallpapers."
+        statusMessage = L10n.format("status.loadingWallpapers", market.localizedLabel)
 
         if isMarketChange {
             wallpapers = []
@@ -63,7 +61,7 @@ final class WallpaperStore: ObservableObject {
                 market: market,
                 isMarketChange: isMarketChange
             )
-            statusMessage = "Loaded cached \(market.label) wallpapers."
+            statusMessage = L10n.format("status.loadedCachedWallpapers", market.localizedLabel)
             finishLoading(loadID: loadID)
             return
         }
@@ -103,19 +101,18 @@ final class WallpaperStore: ObservableObject {
         if !isMarketChange,
            let selectedWallpaperID,
            images.contains(where: { $0.id == selectedWallpaperID }) {
-            statusMessage = "Loaded \(images.count) \(market.label) wallpapers."
+            statusMessage = L10n.format("status.loadedWallpapers", images.count, market.localizedLabel)
             return
         }
 
         selectedWallpaperID = images.first?.id
         errorMessage = nil
-        statusMessage = "Loaded \(images.count) \(market.label) wallpapers."
+        statusMessage = L10n.format("status.loadedWallpapers", images.count, market.localizedLabel)
     }
 
     private func finishLoading(loadID: UUID) {
         if activeLoadID == loadID {
             isLoading = false
-            loadingMarket = nil
         }
     }
 
@@ -132,7 +129,7 @@ final class WallpaperStore: ObservableObject {
         fillMode: WallpaperFillMode
     ) async {
         guard let selectedWallpaper else {
-            errorMessage = "Select a wallpaper first."
+            errorMessage = L10n.string("error.selectWallpaperFirst")
             return
         }
 
@@ -153,7 +150,7 @@ final class WallpaperStore: ObservableObject {
         }
 
         guard let latest = wallpapers.first else {
-            errorMessage = "Bing did not return a latest wallpaper."
+            errorMessage = L10n.string("error.noLatestWallpaper")
             return
         }
 
@@ -161,7 +158,17 @@ final class WallpaperStore: ObservableObject {
         await setAsDesktop(latest, resolution: resolution, fillMode: fillMode)
     }
 
-    func clearMessages() {
+    func clearCache() {
+        do {
+            try cache.removeAll()
+            errorMessage = nil
+            statusMessage = L10n.string("status.cacheCleared")
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    private func clearMessages() {
         errorMessage = nil
         statusMessage = nil
     }
@@ -175,8 +182,8 @@ final class WallpaperStore: ObservableObject {
         let wasCached = cache.isCached(for: wallpaper, resolution: resolution)
         clearMessages()
         statusMessage = wasCached
-            ? "Using cached \(resolution.label) wallpaper."
-            : "Downloading \(resolution.label) wallpaper."
+            ? L10n.format("status.usingCachedWallpaper", resolution.localizedLabel)
+            : L10n.format("status.downloadingWallpaper", resolution.localizedLabel)
         defer { isSettingDesktop = false }
 
         do {
@@ -189,7 +196,7 @@ final class WallpaperStore: ObservableObject {
                 fillMode: fillMode
             )
 
-            statusMessage = "Set \(wallpaper.displayTitle) as desktop wallpaper."
+            statusMessage = L10n.format("status.setDesktop", wallpaper.localizedDisplayTitle)
         } catch {
             errorMessage = error.localizedDescription
         }

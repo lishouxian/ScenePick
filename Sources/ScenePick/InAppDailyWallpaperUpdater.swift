@@ -112,7 +112,7 @@ final class InAppDailyWallpaperUpdater {
 
             defaults.set(Date(), forKey: BingWallpaperDefaultKeys.lastDailyUpdateDate)
         } catch {
-            NSLog("Bing Wallpaper daily update failed: \(error.localizedDescription)")
+            NSLog("ScenePick daily update failed: \(error.localizedDescription)")
         }
     }
 

@@ -19,7 +19,7 @@ public final class WallpaperCache: @unchecked Sendable {
         )[0]
 
         return applicationSupport
-            .appendingPathComponent("BingWallpaperSwitcher", isDirectory: true)
+            .appendingPathComponent("ScenePick", isDirectory: true)
             .appendingPathComponent("Cache", isDirectory: true)
     }
 

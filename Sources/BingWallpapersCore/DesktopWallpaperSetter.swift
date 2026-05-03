@@ -46,15 +46,6 @@ public enum WallpaperFillMode: String, CaseIterable, Codable, Identifiable, Send
 
     public var id: String { rawValue }
 
-    public var label: String {
-        switch self {
-        case .fillScreen:
-            return "Fill Screen"
-        case .fitScreen:
-            return "Fit Screen"
-        }
-    }
-
     var imageScaling: NSImageScaling {
         switch self {
         case .fillScreen:

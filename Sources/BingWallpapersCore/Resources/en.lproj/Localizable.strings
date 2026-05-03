@@ -1,0 +1,7 @@
+"error.invalidURL" = "Could not build a valid Bing wallpaper URL.";
+"error.badResponse" = "Bing returned an invalid response.";
+"error.httpStatus" = "Bing returned HTTP %d.";
+"error.emptyArchive" = "Bing did not return any wallpapers.";
+"error.invalidImageData" = "Downloaded wallpaper data was not a valid image.";
+"error.missingCachedFile" = "The wallpaper file was not found at %@.";
+"error.noScreensAvailable" = "No macOS screens were available for wallpaper switching.";

@@ -1,0 +1,66 @@
+"app.name" = "拾景";
+
+"toolbar.wallpaperQuality" = "壁纸质量";
+"toolbar.fillMode" = "填充方式";
+"toolbar.more" = "更多";
+
+"action.reloadWallpapers" = "重新加载壁纸";
+"action.revealCache" = "显示缓存";
+"action.clearCache" = "清空缓存";
+"action.previous" = "上一张";
+"action.next" = "下一张";
+"action.setDesktop" = "设为桌面";
+"action.source" = "来源";
+
+"menu.openApp" = "打开应用";
+"menu.updateDaily" = "每日更新";
+"menu.quit" = "退出";
+"menu.setLatest" = "设置最新壁纸";
+"menu.settingLatest" = "正在设置最新壁纸...";
+"menu.setLatestFailed" = "设置最新壁纸失败";
+"menu.latestSet" = "最新壁纸已设置";
+
+"accessibility.dailyUpdate" = "每日更新";
+"state.on" = "开";
+"state.off" = "关";
+
+"sidebar.region" = "地区";
+"dailyUpdate.title" = "每日更新";
+"dailyUpdate.help" = "应用运行时，每天自动更新为最新壁纸。";
+
+"loading.bingArchive" = "正在加载 Bing 壁纸";
+"empty.title" = "暂无壁纸";
+"empty.subtitle" = "重新加载壁纸以获取最新精选。";
+"preview.badge" = "预览";
+
+"status.ready" = "就绪。";
+"status.reloading" = "正在重新加载壁纸。";
+"status.downloadingApplying" = "正在下载并应用壁纸。";
+"status.loadingWallpapers" = "正在加载%@壁纸。";
+"status.loadedCachedWallpapers" = "已加载缓存的%@壁纸。";
+"status.loadedWallpapers" = "已加载 %d 张%@壁纸。";
+"status.usingCachedWallpaper" = "正在使用缓存的%@壁纸。";
+"status.downloadingWallpaper" = "正在下载%@壁纸。";
+"status.setDesktop" = "已将%@设为桌面壁纸。";
+"status.cacheCleared" = "缓存已清空。";
+
+"error.selectWallpaperFirst" = "请先选择一张壁纸。";
+"error.noLatestWallpaper" = "Bing 没有返回最新壁纸。";
+
+"wallpaper.defaultTitle" = "Bing 每日壁纸";
+
+"market.china" = "中国";
+"market.unitedStates" = "美国";
+"market.japan" = "日本";
+"market.unitedKingdom" = "英国";
+"market.germany" = "德国";
+"market.france" = "法国";
+"market.canada" = "加拿大";
+"market.australia" = "澳大利亚";
+
+"resolution.uhd" = "UHD";
+"resolution.fullHD" = "HD 1080p";
+"resolution.preview" = "预览";
+
+"fillMode.fillScreen" = "填满屏幕";
+"fillMode.fitScreen" = "适合屏幕";

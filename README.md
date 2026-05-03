@@ -1,6 +1,6 @@
-# Bing Wallpaper Switcher
+# ScenePick / 拾景
 
-A native macOS SwiftUI app for browsing the latest Bing daily wallpapers, previewing high-resolution images, and applying them as the desktop wallpaper across all connected displays.
+ScenePick (拾景) is a native macOS SwiftUI app for browsing the latest Bing daily wallpapers, previewing high-resolution images, and applying them as the desktop wallpaper across all connected displays.
 
 ## Features
 
@@ -13,11 +13,12 @@ A native macOS SwiftUI app for browsing the latest Bing daily wallpapers, previe
 - Pure status bar app with no Dock icon.
 - Optional daily update while the app is running.
 - Main-window controls for region, quality, scaling mode, daily update, and cache management.
+- Localized UI in English and Simplified Chinese.
 
 ## Development
 
 ```bash
-swift run BingWallpaperSwitcher
+swift run ScenePick
 ```
 
 ## Test
@@ -35,7 +36,7 @@ environment on this machine does not expose `XCTest` or Swift `Testing`.
 make app
 ```
 
-The app bundle is written to `Build/Bing Wallpaper Switcher.app`.
+The app bundle is written to `Build/ScenePick.app`.
 
 ## Regenerate App Icon
 

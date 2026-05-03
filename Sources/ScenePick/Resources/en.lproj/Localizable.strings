@@ -1,0 +1,66 @@
+"app.name" = "ScenePick";
+
+"toolbar.wallpaperQuality" = "Wallpaper Quality";
+"toolbar.fillMode" = "Fill Mode";
+"toolbar.more" = "More";
+
+"action.reloadWallpapers" = "Reload Wallpapers";
+"action.revealCache" = "Reveal Cache";
+"action.clearCache" = "Clear Cache";
+"action.previous" = "Previous";
+"action.next" = "Next";
+"action.setDesktop" = "Set Desktop";
+"action.source" = "Source";
+
+"menu.openApp" = "Open App";
+"menu.updateDaily" = "Update Daily";
+"menu.quit" = "Quit";
+"menu.setLatest" = "Set Latest Wallpaper";
+"menu.settingLatest" = "Setting Latest Wallpaper...";
+"menu.setLatestFailed" = "Set Latest Wallpaper Failed";
+"menu.latestSet" = "Latest Wallpaper Set";
+
+"accessibility.dailyUpdate" = "Daily Update";
+"state.on" = "On";
+"state.off" = "Off";
+
+"sidebar.region" = "Region";
+"dailyUpdate.title" = "Daily Update";
+"dailyUpdate.help" = "Update the latest wallpaper daily while the app is running.";
+
+"loading.bingArchive" = "Loading Bing archive";
+"empty.title" = "No Wallpapers";
+"empty.subtitle" = "Reload wallpapers to load the latest picks.";
+"preview.badge" = "Preview";
+
+"status.ready" = "Ready.";
+"status.reloading" = "Reloading wallpapers.";
+"status.downloadingApplying" = "Downloading and applying wallpaper.";
+"status.loadingWallpapers" = "Loading %@ wallpapers.";
+"status.loadedCachedWallpapers" = "Loaded cached %@ wallpapers.";
+"status.loadedWallpapers" = "Loaded %d %@ wallpapers.";
+"status.usingCachedWallpaper" = "Using cached %@ wallpaper.";
+"status.downloadingWallpaper" = "Downloading %@ wallpaper.";
+"status.setDesktop" = "Set %@ as desktop wallpaper.";
+"status.cacheCleared" = "Cache cleared.";
+
+"error.selectWallpaperFirst" = "Select a wallpaper first.";
+"error.noLatestWallpaper" = "Bing did not return a latest wallpaper.";
+
+"wallpaper.defaultTitle" = "Bing Daily Wallpaper";
+
+"market.china" = "China";
+"market.unitedStates" = "United States";
+"market.japan" = "Japan";
+"market.unitedKingdom" = "United Kingdom";
+"market.germany" = "Germany";
+"market.france" = "France";
+"market.canada" = "Canada";
+"market.australia" = "Australia";
+
+"resolution.uhd" = "UHD";
+"resolution.fullHD" = "HD 1080p";
+"resolution.preview" = "Preview";
+
+"fillMode.fillScreen" = "Fill Screen";
+"fillMode.fitScreen" = "Fit Screen";

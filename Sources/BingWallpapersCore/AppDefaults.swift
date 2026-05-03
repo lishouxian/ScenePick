@@ -9,7 +9,7 @@ public enum BingWallpaperDefaultKeys {
 }
 
 public enum BingWallpaperDefaults {
-    public static let suiteName = "com.xian.BingWallpaperSwitcher.settings"
+    public static let suiteName = "com.xian.ScenePick.settings"
 
     public static var store: UserDefaults {
         UserDefaults(suiteName: suiteName) ?? .standard

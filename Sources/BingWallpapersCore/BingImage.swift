@@ -2,40 +2,23 @@ import Foundation
 
 public struct BingArchiveResponse: Decodable, Equatable, Sendable {
     public let images: [BingImage]
-    public let tooltips: BingTooltips?
-}
-
-public struct BingTooltips: Decodable, Equatable, Sendable {
-    public let loading: String?
-    public let previous: String?
-    public let next: String?
-    public let walle: String?
-    public let walls: String?
 }
 
 public struct BingImage: Decodable, Equatable, Hashable, Identifiable, Sendable {
     public let startDate: String
-    public let fullStartDate: String?
-    public let endDate: String?
     public let url: String
     public let urlBase: String
     public let copyright: String
     public let copyrightLink: String?
     public let title: String
-    public let quiz: String?
-    public let wp: Bool?
     public let hash: String?
-    public let drk: Int?
-    public let top: Int?
-    public let bot: Int?
 
     public var id: String {
         [startDate, hash ?? urlBase].joined(separator: "-")
     }
 
     public var displayTitle: String {
-        let trimmedTitle = title.trimmingCharacters(in: .whitespacesAndNewlines)
-        return trimmedTitle.isEmpty ? "Bing Daily Wallpaper" : trimmedTitle
+        title.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     public var copyrightText: String {
@@ -86,19 +69,12 @@ public struct BingImage: Decodable, Equatable, Hashable, Identifiable, Sendable 
 
     private enum CodingKeys: String, CodingKey {
         case startDate = "startdate"
-        case fullStartDate = "fullstartdate"
-        case endDate = "enddate"
         case url
         case urlBase = "urlbase"
         case copyright
         case copyrightLink = "copyrightlink"
         case title
-        case quiz
-        case wp
         case hash = "hsh"
-        case drk
-        case top
-        case bot
     }
 }
 
@@ -108,17 +84,6 @@ public enum WallpaperResolution: String, CaseIterable, Codable, Identifiable, Se
     case preview = "Preview"
 
     public var id: String { rawValue }
-
-    public var label: String {
-        switch self {
-        case .uhd:
-            return "UHD"
-        case .fullHD:
-            return "HD 1080p"
-        case .preview:
-            return "Preview"
-        }
-    }
 
     var bingSuffix: String {
         switch self {

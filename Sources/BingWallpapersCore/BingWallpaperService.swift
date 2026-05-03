@@ -70,19 +70,19 @@ public enum BingWallpaperError: LocalizedError, Equatable, Sendable {
     public var errorDescription: String? {
         switch self {
         case .invalidURL:
-            return "Could not build a valid Bing wallpaper URL."
+            return CoreL10n.string("error.invalidURL")
         case .badResponse:
-            return "Bing returned an invalid response."
+            return CoreL10n.string("error.badResponse")
         case .httpStatus(let statusCode):
-            return "Bing returned HTTP \(statusCode)."
+            return CoreL10n.format("error.httpStatus", statusCode)
         case .emptyArchive:
-            return "Bing did not return any wallpapers."
+            return CoreL10n.string("error.emptyArchive")
         case .invalidImageData:
-            return "Downloaded wallpaper data was not a valid image."
+            return CoreL10n.string("error.invalidImageData")
         case .missingCachedFile(let url):
-            return "The wallpaper file was not found at \(url.path)."
+            return CoreL10n.format("error.missingCachedFile", url.path)
         case .noScreensAvailable:
-            return "No macOS screens were available for wallpaper switching."
+            return CoreL10n.string("error.noScreensAvailable")
         }
     }
 }

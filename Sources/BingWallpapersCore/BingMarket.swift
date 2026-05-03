@@ -11,25 +11,4 @@ public enum BingMarket: String, CaseIterable, Codable, Identifiable, Sendable {
     case australia = "en-AU"
 
     public var id: String { rawValue }
-
-    public var label: String {
-        switch self {
-        case .china:
-            return "China"
-        case .unitedStates:
-            return "United States"
-        case .japan:
-            return "Japan"
-        case .unitedKingdom:
-            return "United Kingdom"
-        case .germany:
-            return "Germany"
-        case .france:
-            return "France"
-        case .canada:
-            return "Canada"
-        case .australia:
-            return "Australia"
-        }
-    }
 }

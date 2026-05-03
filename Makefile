@@ -4,7 +4,7 @@ test:
 	swift run BingWallpapersCoreSelfTest
 
 build:
-	swift build --product BingWallpaperSwitcher
+	swift build --product ScenePick
 
 icon:
 	swift Scripts/generate-icon.swift
