@@ -53,7 +53,7 @@ struct ContentView: View {
                 .frame(width: 130)
 
                 Button {
-                    Task { await store.load(market: selectedMarket) }
+                    Task { await store.load(market: selectedMarket, forceRefresh: true) }
                 } label: {
                     Label("Refresh", systemImage: "arrow.clockwise")
                 }
@@ -170,7 +170,7 @@ private struct WallpaperDetailView: View {
 
             if let wallpaper = store.selectedWallpaper {
                 VStack(spacing: 18) {
-                    WallpaperPreview(wallpaper: wallpaper, resolution: resolution)
+                    WallpaperPreview(wallpaper: wallpaper)
 
                     HStack(alignment: .center, spacing: 12) {
                         Button {
@@ -213,7 +213,8 @@ private struct WallpaperDetailView: View {
                         isLoading: store.isLoading,
                         isSetting: store.isSettingDesktop,
                         statusMessage: store.statusMessage,
-                        errorMessage: store.errorMessage
+                        errorMessage: store.errorMessage,
+                        downloadProgress: store.desktopDownloadProgress
                     )
                 }
                 .padding(24)
@@ -243,33 +244,16 @@ private struct EmptyWallpapersView: View {
 
 private struct WallpaperPreview: View {
     let wallpaper: BingImage
-    let resolution: WallpaperResolution
 
     var body: some View {
         GeometryReader { geometry in
             ZStack(alignment: .bottomLeading) {
-                AsyncImage(url: wallpaper.imageURL(resolution: resolution)) { phase in
-                    switch phase {
-                    case .empty:
-                        ZStack {
-                            Color.secondary.opacity(0.14)
-                            ProgressView("Loading preview")
-                        }
-                    case .success(let image):
-                        image
-                            .resizable()
-                            .scaledToFill()
-                    case .failure:
-                        ZStack {
-                            Color.secondary.opacity(0.14)
-                            Image(systemName: "photo")
-                                .font(.system(size: 56, weight: .regular))
-                                .foregroundStyle(.secondary)
-                        }
-                    @unknown default:
-                        EmptyView()
-                    }
-                }
+                CachedWallpaperImage(
+                    wallpaper: wallpaper,
+                    resolution: .preview,
+                    contentMode: .fill,
+                    showsProgress: true
+                )
                 .frame(width: geometry.size.width, height: geometry.size.height)
                 .clipped()
 
@@ -291,6 +275,21 @@ private struct WallpaperPreview: View {
                         .lineLimit(2)
                 }
                 .padding(22)
+
+                VStack {
+                    HStack {
+                        Spacer()
+                        Text("Preview")
+                            .font(.caption.weight(.medium))
+                            .foregroundColor(.white.opacity(0.86))
+                            .padding(.horizontal, 9)
+                            .padding(.vertical, 5)
+                            .background(.black.opacity(0.42))
+                            .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+                    }
+                    Spacer()
+                }
+                .padding(16)
             }
         }
         .aspectRatio(16.0 / 9.0, contentMode: .fit)
@@ -307,22 +306,41 @@ private struct StatusMessageView: View {
     let isSetting: Bool
     let statusMessage: String?
     let errorMessage: String?
+    let downloadProgress: WallpaperDownloadProgress?
 
     var body: some View {
-        HStack(spacing: 8) {
-            if isLoading || isSetting {
-                ProgressView()
-                    .controlSize(.small)
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 8) {
+                if isLoading || isSetting {
+                    ProgressView()
+                        .controlSize(.small)
+                }
+
+                Text(message)
+                    .font(.footnote)
+                    .foregroundColor(errorMessage == nil ? .secondary : .red)
+                    .lineLimit(2)
+
+                Spacer()
+
+                if let percentageText {
+                    Text(percentageText)
+                        .font(.caption.monospacedDigit())
+                        .foregroundColor(.secondary)
+                }
             }
 
-            Text(message)
-                .font(.footnote)
-                .foregroundColor(errorMessage == nil ? .secondary : .red)
-                .lineLimit(2)
-
-            Spacer()
+            if let downloadProgress {
+                if let fraction = downloadProgress.fractionCompleted {
+                    ProgressView(value: fraction, total: 1)
+                        .progressViewStyle(.linear)
+                } else {
+                    ProgressView()
+                        .progressViewStyle(.linear)
+                }
+            }
         }
-        .frame(minHeight: 24)
+        .frame(minHeight: 28)
     }
 
     private var message: String {
@@ -331,7 +349,7 @@ private struct StatusMessageView: View {
         }
 
         if isSetting {
-            return "Downloading and applying wallpaper."
+            return statusMessage ?? "Downloading and applying wallpaper."
         }
 
         if isLoading {
@@ -339,5 +357,13 @@ private struct StatusMessageView: View {
         }
 
         return statusMessage ?? "Ready."
+    }
+
+    private var percentageText: String? {
+        guard let fraction = downloadProgress?.fractionCompleted else {
+            return nil
+        }
+
+        return "\(Int((fraction * 100).rounded()))%"
     }
 }

@@ -8,8 +8,9 @@ struct BingWallpapersCoreSelfTest {
         try fileNameIsStableAndSafeForCache()
         try archiveURLUsesBingArchiveEndpointAndClampsCount()
         try writesCacheFileIntoConfiguredDirectory()
+        try detectsCachedFiles()
 
-        print("BingWallpapersCoreSelfTest: 4 tests passed")
+        print("BingWallpapersCoreSelfTest: 5 tests passed")
     }
 
     private static func decodesBingArchiveAndBuildsHighResolutionURLs() throws {
@@ -88,6 +89,22 @@ struct BingWallpapersCoreSelfTest {
 
         try cache.removeAll()
         try expect(!FileManager.default.fileExists(atPath: directory.path), "cache directory should be removed")
+    }
+
+    private static func detectsCachedFiles() throws {
+        let directory = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        let cache = WallpaperCache(directory: directory)
+        let image = try require(
+            try JSONDecoder().decode(BingArchiveResponse.self, from: cacheFixture).images.first,
+            "cache fixture image"
+        )
+
+        try expect(!cache.isCached(for: image, resolution: .preview), "preview should not be cached before write")
+        try cache.write(Data(repeating: 1, count: 8), for: image, resolution: .preview)
+        try expect(cache.isCached(for: image, resolution: .preview), "preview should be cached after write")
+
+        try cache.removeAll()
     }
 
     private static func require<T>(_ value: T?, _ message: String) throws -> T {

@@ -1,4 +1,4 @@
-.PHONY: test build app
+.PHONY: test build icon app
 
 test:
 	swift run BingWallpapersCoreSelfTest
@@ -6,5 +6,8 @@ test:
 build:
 	swift build --product BingWallpaperSwitcher
 
-app:
+icon:
+	swift Scripts/generate-icon.swift
+
+app: icon
 	./Scripts/build-app.sh

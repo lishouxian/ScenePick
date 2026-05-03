@@ -6,6 +6,9 @@ A native macOS SwiftUI app for browsing the latest Bing daily wallpapers, previe
 
 - Browse the latest Bing wallpaper archive by region.
 - Preview the selected wallpaper in UHD, HD 1080p, or preview quality.
+- Cache wallpaper metadata and downloaded images for faster switching.
+- Show download progress when applying HD and UHD wallpapers.
+- Use lightweight cached previews instead of downloading full-resolution images for browsing.
 - Switch the macOS desktop wallpaper from the main window or menu bar.
 - Cache downloaded wallpaper files under Application Support.
 - Optional launch behavior to set the latest Bing wallpaper automatically.
@@ -29,8 +32,13 @@ environment on this machine does not expose `XCTest` or Swift `Testing`.
 ## Build `.app`
 
 ```bash
-chmod +x Scripts/build-app.sh
-./Scripts/build-app.sh
+make app
 ```
 
 The app bundle is written to `Build/Bing Wallpaper Switcher.app`.
+
+## Regenerate App Icon
+
+```bash
+make icon
+```
