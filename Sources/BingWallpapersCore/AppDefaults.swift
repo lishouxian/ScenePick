@@ -6,6 +6,7 @@ public enum BingWallpaperDefaultKeys {
     public static let fillMode = "fillMode"
     public static let dailyAutoUpdateEnabled = "dailyAutoUpdateEnabled"
     public static let lastDailyUpdateDate = "lastDailyUpdateDate"
+    public static let selectedLanguage = "selectedLanguage"
 }
 
 public enum BingWallpaperDefaults {

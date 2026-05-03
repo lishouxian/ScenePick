@@ -15,6 +15,8 @@ struct ScenePickApp: App {
     private var fillModeRaw = WallpaperFillMode.fillScreen.rawValue
     @AppStorage(BingWallpaperDefaultKeys.dailyAutoUpdateEnabled, store: BingWallpaperDefaults.store)
     private var dailyAutoUpdateEnabled = false
+    @AppStorage(BingWallpaperDefaultKeys.selectedLanguage, store: BingWallpaperDefaults.store)
+    private var selectedLanguageRaw = AppLanguage.system.rawValue
 
     private var selectedMarket: BingMarket {
         BingMarket(rawValue: selectedMarketRaw) ?? .china
@@ -35,7 +37,8 @@ struct ScenePickApp: App {
                 selectedMarketRaw: $selectedMarketRaw,
                 selectedResolutionRaw: $selectedResolutionRaw,
                 fillModeRaw: $fillModeRaw,
-                dailyAutoUpdateEnabled: $dailyAutoUpdateEnabled
+                dailyAutoUpdateEnabled: $dailyAutoUpdateEnabled,
+                selectedLanguageRaw: $selectedLanguageRaw
             )
             .frame(minWidth: 1120, minHeight: 620)
             .task {

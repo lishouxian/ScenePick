@@ -8,6 +8,7 @@ struct ContentView: View {
     @Binding var selectedResolutionRaw: String
     @Binding var fillModeRaw: String
     @Binding var dailyAutoUpdateEnabled: Bool
+    @Binding var selectedLanguageRaw: String
 
     private var selectedMarket: BingMarket {
         BingMarket(rawValue: selectedMarketRaw) ?? .china
@@ -23,11 +24,7 @@ struct ContentView: View {
 
     var body: some View {
         NavigationSplitView {
-            WallpaperSidebar(
-                store: store,
-                selectedMarketRaw: $selectedMarketRaw,
-                dailyAutoUpdateEnabled: $dailyAutoUpdateEnabled
-            )
+            WallpaperSidebar(store: store)
             .navigationSplitViewColumnWidth(min: 280, ideal: 320, max: 380)
         } detail: {
             WallpaperDetailView(
@@ -39,6 +36,16 @@ struct ContentView: View {
         .toolbar {
             ToolbarItemGroup(placement: .primaryAction) {
                 Menu {
+                    Picker(L10n.string("sidebar.region"), selection: $selectedMarketRaw) {
+                        ForEach(BingMarket.allCases) { market in
+                            Text(market.localizedLabel).tag(market.rawValue)
+                        }
+                    }
+
+                    Toggle(L10n.string("dailyUpdate.title"), isOn: $dailyAutoUpdateEnabled)
+
+                    Divider()
+
                     Picker(L10n.string("toolbar.wallpaperQuality"), selection: $selectedResolutionRaw) {
                         ForEach(WallpaperResolution.allCases) { resolution in
                             Text(resolution.localizedLabel).tag(resolution.rawValue)
@@ -48,6 +55,12 @@ struct ContentView: View {
                     Picker(L10n.string("toolbar.fillMode"), selection: $fillModeRaw) {
                         ForEach(WallpaperFillMode.allCases) { mode in
                             Text(mode.localizedLabel).tag(mode.rawValue)
+                        }
+                    }
+
+                    Picker(L10n.string("toolbar.language"), selection: $selectedLanguageRaw) {
+                        ForEach(AppLanguage.allCases) { language in
+                            Text(language.localizedLabel).tag(language.rawValue)
                         }
                     }
 
@@ -85,6 +98,9 @@ struct ContentView: View {
         .onChange(of: dailyAutoUpdateEnabled) { _ in
             InAppDailyWallpaperUpdater.shared.start()
         }
+        .onChange(of: selectedLanguageRaw) { _ in
+            store.clearMessages()
+        }
     }
 
     private func revealCache() {
@@ -95,100 +111,26 @@ struct ContentView: View {
 
 }
 
-private struct DailyUpdateSwitchToggleStyle: ToggleStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        Button {
-            withAnimation(.spring(response: 0.22, dampingFraction: 0.86)) {
-                configuration.isOn.toggle()
-            }
-        } label: {
-            ZStack {
-                Capsule()
-                    .fill(configuration.isOn ? Color.accentColor : Color(red: 0.83, green: 0.84, blue: 0.85))
-                    .overlay {
-                        Capsule()
-                            .strokeBorder(Color.black.opacity(configuration.isOn ? 0.0 : 0.06), lineWidth: 1)
-                    }
-                    .shadow(color: .black.opacity(0.08), radius: 1.5, x: 0, y: 1)
-
-                Circle()
-                    .fill(Color.white)
-                    .frame(width: 18, height: 18)
-                    .shadow(color: .black.opacity(0.18), radius: 1.5, x: 0, y: 1)
-                    .padding(3)
-                    .offset(x: configuration.isOn ? 9 : -9)
-            }
-            .frame(width: 42, height: 24)
-            .contentShape(Rectangle())
-            .animation(.spring(response: 0.22, dampingFraction: 0.86), value: configuration.isOn)
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel(L10n.string("accessibility.dailyUpdate"))
-        .accessibilityValue(configuration.isOn ? L10n.string("state.on") : L10n.string("state.off"))
-    }
-}
-
 private struct WallpaperSidebar: View {
     @ObservedObject var store: WallpaperStore
-    @Binding var selectedMarketRaw: String
-    @Binding var dailyAutoUpdateEnabled: Bool
 
     var body: some View {
-        VStack(spacing: 0) {
-            VStack(alignment: .leading, spacing: 12) {
-                Text(L10n.string("app.name"))
-                    .font(.title2.weight(.semibold))
-
-                Picker(L10n.string("sidebar.region"), selection: $selectedMarketRaw) {
-                    ForEach(BingMarket.allCases) { market in
-                        Text(market.localizedLabel).tag(market.rawValue)
-                    }
-                }
-                .pickerStyle(.menu)
-
-                DailyUpdatePreferenceRow(isOn: $dailyAutoUpdateEnabled)
+        List(selection: $store.selectedWallpaperID) {
+            ForEach(store.wallpapers) { wallpaper in
+                WallpaperRow(wallpaper: wallpaper)
+                    .tag(wallpaper.id)
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding([.horizontal, .top], 18)
-            .padding(.bottom, 14)
-
-            Divider()
-
-            List(selection: $store.selectedWallpaperID) {
-                ForEach(store.wallpapers) { wallpaper in
-                    WallpaperRow(wallpaper: wallpaper)
-                        .tag(wallpaper.id)
-                }
-            }
-            .listStyle(.sidebar)
-            .overlay {
-                if store.isLoading && store.wallpapers.isEmpty {
-                    ProgressView(loadingText)
-                }
+        }
+        .listStyle(.sidebar)
+        .overlay {
+            if store.isLoading && store.wallpapers.isEmpty {
+                ProgressView(loadingText)
             }
         }
     }
 
     private var loadingText: String {
         L10n.string("loading.bingArchive")
-    }
-}
-
-private struct DailyUpdatePreferenceRow: View {
-    @Binding var isOn: Bool
-
-    var body: some View {
-        HStack(spacing: 12) {
-            Text(L10n.string("dailyUpdate.title"))
-                .font(.callout.weight(.medium))
-
-            Spacer()
-
-            Toggle(L10n.string("dailyUpdate.title"), isOn: $isOn)
-                .labelsHidden()
-                .toggleStyle(DailyUpdateSwitchToggleStyle())
-        }
-        .help(L10n.string("dailyUpdate.help"))
     }
 }
 

@@ -67,7 +67,7 @@ final class WallpaperStore: ObservableObject {
         }
 
         do {
-            let images = try await service.fetchArchive(market: market)
+            let images = try await service.fetchAvailableArchive(market: market)
             guard activeLoadID == loadID else {
                 return
             }
@@ -168,7 +168,7 @@ final class WallpaperStore: ObservableObject {
         }
     }
 
-    private func clearMessages() {
+    func clearMessages() {
         errorMessage = nil
         statusMessage = nil
     }
@@ -219,6 +219,7 @@ final class WallpaperStore: ObservableObject {
 
     private func prefetchPreviewImages(_ images: [BingImage]) {
         let cache = cache
+        previewPrefetchTask?.cancel()
         previewPrefetchTask = Task.detached(priority: .background) {
             await withTaskGroup(of: Void.self) { group in
                 for image in images {

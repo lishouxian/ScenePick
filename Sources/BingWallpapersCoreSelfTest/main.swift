@@ -7,10 +7,11 @@ struct BingWallpapersCoreSelfTest {
         try decodesBingArchiveAndBuildsHighResolutionURLs()
         try fileNameIsStableAndSafeForCache()
         try archiveURLUsesBingArchiveEndpointAndClampsCount()
+        try archiveURLClampsOffsetToBingLimit()
         try writesCacheFileIntoConfiguredDirectory()
         try detectsCachedFiles()
 
-        print("BingWallpapersCoreSelfTest: 5 tests passed")
+        print("BingWallpapersCoreSelfTest: 6 tests passed")
     }
 
     private static func decodesBingArchiveAndBuildsHighResolutionURLs() throws {
@@ -71,6 +72,23 @@ struct BingWallpapersCoreSelfTest {
         try expect(queryItems["n"] == "8", "archive count clamp")
         try expect(queryItems["mkt"] == "zh-CN", "archive market query")
         try expect(queryItems["uhd"] == "1", "archive UHD query")
+    }
+
+    private static func archiveURLClampsOffsetToBingLimit() throws {
+        let url = try BingWallpaperService.archiveURL(
+            market: .china,
+            count: 8,
+            offset: 30
+        )
+        let components = try require(
+            URLComponents(url: url, resolvingAgainstBaseURL: false),
+            "archive URL components"
+        )
+        let queryItems = Dictionary(
+            uniqueKeysWithValues: (components.queryItems ?? []).map { ($0.name, $0.value ?? "") }
+        )
+
+        try expect(queryItems["idx"] == "7", "archive offset upper clamp")
     }
 
     private static func writesCacheFileIntoConfiguredDirectory() throws {

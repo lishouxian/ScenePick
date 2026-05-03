@@ -1,6 +1,9 @@
 import Foundation
 
 public final class BingWallpaperService: @unchecked Sendable {
+    public static let archivePageSize = 8
+    public static let maximumArchiveOffset = 7
+
     private let session: URLSession
     private let decoder: JSONDecoder
 
@@ -26,6 +29,27 @@ public final class BingWallpaperService: @unchecked Sendable {
         return archive.images
     }
 
+    public func fetchAvailableArchive(market: BingMarket) async throws -> [BingImage] {
+        let latestImages = try await fetchArchive(
+            market: market,
+            count: Self.archivePageSize
+        )
+        guard latestImages.count == Self.archivePageSize else {
+            return latestImages
+        }
+
+        do {
+            let olderImages = try await fetchArchive(
+                market: market,
+                count: Self.archivePageSize,
+                offset: Self.maximumArchiveOffset
+            )
+            return Self.deduplicated(latestImages + olderImages)
+        } catch BingWallpaperError.emptyArchive {
+            return latestImages
+        }
+    }
+
     public static func archiveURL(
         market: BingMarket,
         count: Int = 8,
@@ -34,8 +58,8 @@ public final class BingWallpaperService: @unchecked Sendable {
         var components = URLComponents(string: "https://global.bing.com/HPImageArchive.aspx")
         components?.queryItems = [
             URLQueryItem(name: "format", value: "js"),
-            URLQueryItem(name: "idx", value: String(max(0, offset))),
-            URLQueryItem(name: "n", value: String(min(max(count, 1), 8))),
+            URLQueryItem(name: "idx", value: String(min(max(offset, 0), maximumArchiveOffset))),
+            URLQueryItem(name: "n", value: String(min(max(count, 1), archivePageSize))),
             URLQueryItem(name: "mkt", value: market.rawValue),
             URLQueryItem(name: "uhd", value: "1")
         ]
@@ -54,6 +78,13 @@ public final class BingWallpaperService: @unchecked Sendable {
 
         guard (200...299).contains(httpResponse.statusCode) else {
             throw BingWallpaperError.httpStatus(httpResponse.statusCode)
+        }
+    }
+
+    private static func deduplicated(_ images: [BingImage]) -> [BingImage] {
+        var seenIDs = Set<BingImage.ID>()
+        return images.filter { image in
+            seenIDs.insert(image.id).inserted
         }
     }
 }

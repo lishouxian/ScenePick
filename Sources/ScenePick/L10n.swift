@@ -3,11 +3,44 @@ import Foundation
 
 enum L10n {
     static func string(_ key: String) -> String {
-        NSLocalizedString(key, bundle: .module, comment: "")
+        NSLocalizedString(key, bundle: localizedBundle, comment: "")
     }
 
     static func format(_ key: String, _ arguments: CVarArg...) -> String {
         String(format: string(key), locale: Locale.current, arguments: arguments)
+    }
+
+    private static var localizedBundle: Bundle {
+        let language = AppLanguage(
+            rawValue: BingWallpaperDefaults.store.string(forKey: BingWallpaperDefaultKeys.selectedLanguage) ?? ""
+        ) ?? .system
+
+        guard language != .system,
+              let path = Bundle.module.path(forResource: language.rawValue, ofType: "lproj"),
+              let bundle = Bundle(path: path) else {
+            return .module
+        }
+
+        return bundle
+    }
+}
+
+enum AppLanguage: String, CaseIterable, Identifiable {
+    case system
+    case english = "en"
+    case simplifiedChinese = "zh-Hans"
+
+    var id: String { rawValue }
+
+    var localizedLabel: String {
+        switch self {
+        case .system:
+            return L10n.string("language.system")
+        case .english:
+            return L10n.string("language.english")
+        case .simplifiedChinese:
+            return L10n.string("language.simplifiedChinese")
+        }
     }
 }
 

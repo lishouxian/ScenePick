@@ -2,6 +2,7 @@
 
 "toolbar.wallpaperQuality" = "壁纸质量";
 "toolbar.fillMode" = "填充方式";
+"toolbar.language" = "语言";
 "toolbar.more" = "更多";
 
 "action.reloadWallpapers" = "重新加载壁纸";
@@ -23,6 +24,10 @@
 "accessibility.dailyUpdate" = "每日更新";
 "state.on" = "开";
 "state.off" = "关";
+
+"language.system" = "跟随系统";
+"language.english" = "English";
+"language.simplifiedChinese" = "简体中文";
 
 "sidebar.region" = "地区";
 "dailyUpdate.title" = "每日更新";

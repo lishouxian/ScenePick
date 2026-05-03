@@ -18,7 +18,9 @@ struct MenuBarContentView: View {
             Label(L10n.string("menu.openApp"), systemImage: "macwindow")
         }
 
-        Toggle(isOn: $dailyAutoUpdateEnabled) {
+        Button {
+            dailyAutoUpdateEnabled.toggle()
+        } label: {
             Label(L10n.string("menu.updateDaily"), systemImage: dailyAutoUpdateEnabled ? "checkmark.circle.fill" : "circle")
         }
 

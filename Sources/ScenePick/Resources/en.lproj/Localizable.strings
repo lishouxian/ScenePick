@@ -2,6 +2,7 @@
 
 "toolbar.wallpaperQuality" = "Wallpaper Quality";
 "toolbar.fillMode" = "Fill Mode";
+"toolbar.language" = "Language";
 "toolbar.more" = "More";
 
 "action.reloadWallpapers" = "Reload Wallpapers";
@@ -23,6 +24,10 @@
 "accessibility.dailyUpdate" = "Daily Update";
 "state.on" = "On";
 "state.off" = "Off";
+
+"language.system" = "System";
+"language.english" = "English";
+"language.simplifiedChinese" = "Chinese (Simplified)";
 
 "sidebar.region" = "Region";
 "dailyUpdate.title" = "Daily Update";
