@@ -23,15 +23,15 @@ struct BingWallpapersCoreSelfTest {
         try expect(image.id == "20260503-fixturehash", "stable Bing image id")
         try expect(image.displayTitle == "Desert Geometry", "display title")
         try expect(
-            image.previewURL.absoluteString == "https://www.bing.com/th?id=OHR.DesertGeometry_EN-US1234567890_1366x768.jpg&rf=LaDigue_1366x768.jpg&pid=hp",
+            image.previewURL.absoluteString == "https://global.bing.com/th?id=OHR.DesertGeometry_EN-US1234567890_1366x768.jpg&rf=LaDigue_1366x768.jpg&pid=hp",
             "preview URL"
         )
         try expect(
-            image.imageURL(resolution: .uhd).absoluteString == "https://www.bing.com/th?id=OHR.DesertGeometry_EN-US1234567890_UHD.jpg",
+            image.imageURL(resolution: .uhd).absoluteString == "https://global.bing.com/th?id=OHR.DesertGeometry_EN-US1234567890_UHD.jpg",
             "UHD URL"
         )
         try expect(
-            image.imageURL(resolution: .fullHD).absoluteString == "https://www.bing.com/th?id=OHR.DesertGeometry_EN-US1234567890_1920x1080.jpg",
+            image.imageURL(resolution: .fullHD).absoluteString == "https://global.bing.com/th?id=OHR.DesertGeometry_EN-US1234567890_1920x1080.jpg",
             "1080p URL"
         )
     }
@@ -63,7 +63,7 @@ struct BingWallpapersCoreSelfTest {
         )
 
         try expect(components.scheme == "https", "archive URL scheme")
-        try expect(components.host == "www.bing.com", "archive URL host")
+        try expect(components.host == "global.bing.com", "archive URL host")
         try expect(components.path == "/HPImageArchive.aspx", "archive URL path")
         try expect(queryItems["format"] == "js", "archive format query")
         try expect(queryItems["idx"] == "0", "archive offset clamp")

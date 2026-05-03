@@ -81,7 +81,7 @@ public struct BingImage: Decodable, Equatable, Hashable, Identifiable, Sendable 
             normalizedPath = "/" + normalizedPath
         }
 
-        return URL(string: "https://www.bing.com\(normalizedPath)")!
+        return URL(string: "https://global.bing.com\(normalizedPath)")!
     }
 
     private enum CodingKeys: String, CodingKey {

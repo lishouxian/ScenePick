@@ -60,8 +60,9 @@ struct ContentView: View {
                 .disabled(store.isLoading)
             }
         }
-        .onChange(of: selectedMarketRaw) { _ in
-            Task { await store.load(market: selectedMarket) }
+        .onChange(of: selectedMarketRaw) { newValue in
+            let market = BingMarket(rawValue: newValue) ?? .china
+            Task { await store.load(market: market) }
         }
     }
 }
@@ -98,10 +99,18 @@ private struct WallpaperSidebar: View {
             .listStyle(.sidebar)
             .overlay {
                 if store.isLoading && store.wallpapers.isEmpty {
-                    ProgressView("Loading Bing archive")
+                    ProgressView(loadingText)
                 }
             }
         }
+    }
+
+    private var loadingText: String {
+        guard let loadingMarket = store.loadingMarket else {
+            return "Loading Bing archive"
+        }
+
+        return "Loading \(loadingMarket.label)"
     }
 }
 

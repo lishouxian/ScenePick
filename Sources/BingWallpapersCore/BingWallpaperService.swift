@@ -31,7 +31,7 @@ public final class BingWallpaperService: @unchecked Sendable {
         count: Int = 8,
         offset: Int = 0
     ) throws -> URL {
-        var components = URLComponents(string: "https://www.bing.com/HPImageArchive.aspx")
+        var components = URLComponents(string: "https://global.bing.com/HPImageArchive.aspx")
         components?.queryItems = [
             URLQueryItem(name: "format", value: "js"),
             URLQueryItem(name: "idx", value: String(max(0, offset))),

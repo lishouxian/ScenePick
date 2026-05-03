@@ -8,12 +8,15 @@ final class WallpaperStore: ObservableObject {
     @Published var selectedWallpaperID: BingImage.ID?
     @Published private(set) var isLoading = false
     @Published private(set) var isSettingDesktop = false
+    @Published private(set) var activeMarket: BingMarket?
+    @Published private(set) var loadingMarket: BingMarket?
     @Published var errorMessage: String?
     @Published var statusMessage: String?
 
     private let service: BingWallpaperService
     private let cache: WallpaperCache
     private let desktopSetter: DesktopWallpaperSetting
+    private var activeLoadID: UUID?
 
     init(
         service: BingWallpaperService = BingWallpaperService(),
@@ -34,27 +37,52 @@ final class WallpaperStore: ObservableObject {
     }
 
     func load(market: BingMarket) async {
-        guard !isLoading else {
-            return
-        }
+        let loadID = UUID()
+        let isMarketChange = activeMarket != nil && activeMarket != market
 
+        activeLoadID = loadID
+        loadingMarket = market
         isLoading = true
-        defer { isLoading = false }
+        errorMessage = nil
+        statusMessage = "Loading \(market.label) wallpapers."
+
+        if isMarketChange {
+            wallpapers = []
+            selectedWallpaperID = nil
+        }
 
         do {
             let images = try await service.fetchArchive(market: market)
+            guard activeLoadID == loadID else {
+                return
+            }
+
+            activeMarket = market
             wallpapers = images
 
-            if let selectedWallpaperID,
+            if !isMarketChange,
+               let selectedWallpaperID,
                images.contains(where: { $0.id == selectedWallpaperID }) {
+                statusMessage = "Loaded \(images.count) \(market.label) wallpapers."
+                isLoading = false
+                loadingMarket = nil
                 return
             }
 
             selectedWallpaperID = images.first?.id
             errorMessage = nil
-            statusMessage = "Loaded \(images.count) Bing wallpapers."
+            statusMessage = "Loaded \(images.count) \(market.label) wallpapers."
         } catch {
+            guard activeLoadID == loadID else {
+                return
+            }
+
             errorMessage = error.localizedDescription
+        }
+
+        if activeLoadID == loadID {
+            isLoading = false
+            loadingMarket = nil
         }
     }
 
