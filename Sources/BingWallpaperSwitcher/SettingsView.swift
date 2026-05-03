@@ -12,7 +12,7 @@ struct SettingsView: View {
     @Binding var showMenuBarIcon: Bool
     @State private var cacheMessage: String?
     @State private var automationMessage: String?
-    @State private var isConfiguringDailyUpdate = false
+    @State private var schedulerTask: Task<Void, Never>?
 
     var body: some View {
         Form {
@@ -40,20 +40,9 @@ struct SettingsView: View {
 
             Section("Automation") {
                 Toggle("Update latest wallpaper every day in background", isOn: $dailyAutoUpdateEnabled)
-                    .disabled(isConfiguringDailyUpdate)
                 Text("Runs at 08:30 using a LaunchAgent. The main app does not need to stay open.")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
-
-                if isConfiguringDailyUpdate {
-                    HStack(spacing: 8) {
-                        ProgressView()
-                            .controlSize(.small)
-                        Text("Updating background schedule.")
-                            .font(.footnote)
-                            .foregroundStyle(.secondary)
-                    }
-                }
 
                 if let automationMessage {
                     Text(automationMessage)
@@ -106,15 +95,13 @@ struct SettingsView: View {
     }
 
     private func configureDailyUpdate(enabled: Bool) {
-        guard !isConfiguringDailyUpdate else {
-            return
-        }
-
         let appBundleURL = Bundle.main.bundleURL
-        isConfiguringDailyUpdate = true
-        automationMessage = nil
+        schedulerTask?.cancel()
+        automationMessage = enabled
+            ? "Daily background update is scheduled."
+            : "Daily background update is disabled."
 
-        Task {
+        schedulerTask = Task {
             let result = await Task.detached(priority: .utility) {
                 Result {
                     if enabled {
@@ -125,7 +112,9 @@ struct SettingsView: View {
                 }
             }.value
 
-            isConfiguringDailyUpdate = false
+            guard !Task.isCancelled else {
+                return
+            }
 
             switch result {
             case .success:

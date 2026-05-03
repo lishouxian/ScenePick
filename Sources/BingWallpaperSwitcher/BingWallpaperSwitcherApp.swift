@@ -44,7 +44,10 @@ struct BingWallpaperSwitcherApp: App {
             .onAppear {
                 ApplicationVisibilityController.apply(showDockIcon: showDockIcon)
                 if dailyAutoUpdateEnabled {
-                    try? DailyWallpaperScheduler.install(appBundleURL: Bundle.main.bundleURL)
+                    let appBundleURL = Bundle.main.bundleURL
+                    Task.detached(priority: .utility) {
+                        try? DailyWallpaperScheduler.install(appBundleURL: appBundleURL)
+                    }
                 }
             }
             .onChange(of: showDockIcon) { visible in

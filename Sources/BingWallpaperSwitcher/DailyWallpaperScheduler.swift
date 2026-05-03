@@ -32,7 +32,6 @@ enum DailyWallpaperScheduler {
         try launchctl(["bootout", domain, plistURL.path], allowsFailure: true)
         try plist(agentPath: agentURL.path).write(to: plistURL, atomically: true, encoding: .utf8)
         try launchctl(["bootstrap", domain, plistURL.path], allowsFailure: false)
-        try launchctl(["kickstart", "-k", "\(domain)/\(label)"], allowsFailure: true)
     }
 
     static func uninstall() throws {
@@ -77,8 +76,6 @@ enum DailyWallpaperScheduler {
           <array>
             <string>\(agentPath.xmlEscaped)</string>
           </array>
-          <key>RunAtLoad</key>
-          <true/>
           <key>StartCalendarInterval</key>
           <dict>
             <key>Hour</key>
