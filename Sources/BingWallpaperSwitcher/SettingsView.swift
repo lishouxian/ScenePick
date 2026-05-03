@@ -12,6 +12,7 @@ struct SettingsView: View {
     @Binding var showMenuBarIcon: Bool
     @State private var cacheMessage: String?
     @State private var automationMessage: String?
+    @State private var isConfiguringDailyUpdate = false
 
     var body: some View {
         Form {
@@ -39,9 +40,20 @@ struct SettingsView: View {
 
             Section("Automation") {
                 Toggle("Update latest wallpaper every day in background", isOn: $dailyAutoUpdateEnabled)
+                    .disabled(isConfiguringDailyUpdate)
                 Text("Runs at 08:30 using a LaunchAgent. The main app does not need to stay open.")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
+
+                if isConfiguringDailyUpdate {
+                    HStack(spacing: 8) {
+                        ProgressView()
+                            .controlSize(.small)
+                        Text("Updating background schedule.")
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
+                    }
+                }
 
                 if let automationMessage {
                     Text(automationMessage)
@@ -94,18 +106,37 @@ struct SettingsView: View {
     }
 
     private func configureDailyUpdate(enabled: Bool) {
-        do {
-            if enabled {
-                try DailyWallpaperScheduler.install(appBundleURL: Bundle.main.bundleURL)
-                automationMessage = "Daily background update is enabled."
-            } else {
-                try DailyWallpaperScheduler.uninstall()
-                automationMessage = "Daily background update is disabled."
-            }
-        } catch {
-            automationMessage = error.localizedDescription
-            if enabled {
-                dailyAutoUpdateEnabled = false
+        guard !isConfiguringDailyUpdate else {
+            return
+        }
+
+        let appBundleURL = Bundle.main.bundleURL
+        isConfiguringDailyUpdate = true
+        automationMessage = nil
+
+        Task {
+            let result = await Task.detached(priority: .utility) {
+                Result {
+                    if enabled {
+                        try DailyWallpaperScheduler.install(appBundleURL: appBundleURL)
+                    } else {
+                        try DailyWallpaperScheduler.uninstall()
+                    }
+                }
+            }.value
+
+            isConfiguringDailyUpdate = false
+
+            switch result {
+            case .success:
+                automationMessage = enabled
+                    ? "Daily background update is enabled."
+                    : "Daily background update is disabled."
+            case .failure(let error):
+                automationMessage = error.localizedDescription
+                if enabled {
+                    dailyAutoUpdateEnabled = false
+                }
             }
         }
     }
