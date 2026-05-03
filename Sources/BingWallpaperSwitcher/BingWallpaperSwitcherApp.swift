@@ -15,7 +15,7 @@ struct BingWallpaperSwitcherApp: App {
     @AppStorage(BingWallpaperDefaultKeys.dailyAutoUpdateEnabled, store: BingWallpaperDefaults.store)
     private var dailyAutoUpdateEnabled = false
     @AppStorage(BingWallpaperDefaultKeys.showDockIcon, store: BingWallpaperDefaults.store)
-    private var showDockIcon = true
+    private var showDockIcon = false
     @AppStorage(BingWallpaperDefaultKeys.showMenuBarIcon, store: BingWallpaperDefaults.store)
     private var showMenuBarIcon = true
 

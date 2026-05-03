@@ -22,8 +22,7 @@ let iconSizes: [(name: String, pixels: Int)] = [
     ("icon_128x128@2x.png", 256),
     ("icon_256x256.png", 256),
     ("icon_256x256@2x.png", 512),
-    ("icon_512x512.png", 512),
-    ("icon_512x512@2x.png", 1024)
+    ("icon_512x512.png", 512)
 ]
 
 for iconSize in iconSizes {
