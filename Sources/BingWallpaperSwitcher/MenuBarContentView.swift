@@ -6,8 +6,24 @@ struct MenuBarContentView: View {
     let market: BingMarket
     let resolution: WallpaperResolution
     let fillMode: WallpaperFillMode
+    let openApp: () -> Void
+    let openPreferences: () -> Void
 
     var body: some View {
+        Button {
+            openApp()
+        } label: {
+            Label("Open App", systemImage: "macwindow")
+        }
+
+        Button {
+            openPreferences()
+        } label: {
+            Label("Open Settings", systemImage: "gearshape")
+        }
+
+        Divider()
+
         Button {
             Task {
                 await store.setLatestAsDesktop(

@@ -3,6 +3,7 @@ import SwiftUI
 
 @main
 struct BingWallpaperSwitcherApp: App {
+    @Environment(\.openWindow) private var openWindow
     @StateObject private var store = WallpaperStore()
     @AppStorage(BingWallpaperDefaultKeys.selectedMarket, store: BingWallpaperDefaults.store)
     private var selectedMarketRaw = BingMarket.china.rawValue
@@ -32,7 +33,7 @@ struct BingWallpaperSwitcherApp: App {
     }
 
     var body: some Scene {
-        WindowGroup {
+        WindowGroup(id: "main") {
             ContentView(
                 store: store,
                 selectedMarketRaw: $selectedMarketRaw,
@@ -74,7 +75,14 @@ struct BingWallpaperSwitcherApp: App {
                 store: store,
                 market: selectedMarket,
                 resolution: selectedResolution,
-                fillMode: fillMode
+                fillMode: fillMode,
+                openApp: {
+                    openWindow(id: "main")
+                    ApplicationVisibilityController.activate()
+                },
+                openPreferences: {
+                    ApplicationVisibilityController.openSettings()
+                }
             )
         }
         .menuBarExtraStyle(.menu)
