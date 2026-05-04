@@ -50,6 +50,8 @@ brew upgrade --cask scene-pick
 brew uninstall --cask scene-pick
 ```
 
+The current Cask removes quarantine after installation because the public build is ad-hoc signed. For broader public distribution, configure Developer ID signing and Apple notarization in the release workflow.
+
 If the GitHub repository is not `lishouxian/ScenePick`, update the `url` and `homepage` in `Casks/scene-pick.rb` and the tap copy before publishing the Cask.
 
 ## Development
