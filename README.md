@@ -34,22 +34,23 @@ xattr -dr com.apple.quarantine /Applications/ScenePick.app
 
 ### Homebrew
 
-This repo includes a Cask template at `Casks/scene-pick.rb`.
+This repo includes a Cask template at `Casks/scene-pick.rb`; the published tap lives at `lishouxian/homebrew-tap`.
 
-For a normal Homebrew install, copy `Casks/scene-pick.rb` into a Homebrew tap repository, then install from that tap:
+Install with:
 
 ```bash
 brew tap lishouxian/tap
 brew install --cask scene-pick
 ```
 
-For one-off Cask testing after a GitHub Release exists:
+Update or uninstall with:
 
 ```bash
-brew install --cask ./Casks/scene-pick.rb
+brew upgrade --cask scene-pick
+brew uninstall --cask scene-pick
 ```
 
-If the GitHub repository is not `lishouxian/ScenePick`, update the `url` and `homepage` in `Casks/scene-pick.rb` before publishing the Cask.
+If the GitHub repository is not `lishouxian/ScenePick`, update the `url` and `homepage` in `Casks/scene-pick.rb` and the tap copy before publishing the Cask.
 
 ## Development
 
