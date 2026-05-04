@@ -5,7 +5,7 @@ cask "scene-pick" do
   url "https://github.com/lishouxian/ScenePick/releases/download/v#{version}/ScenePick.dmg"
   name "ScenePick"
   name "拾景"
-  desc "Menu bar app for browsing Bing daily wallpapers and setting the macOS desktop wallpaper"
+  desc "Browse Bing daily wallpapers and set the desktop background"
   homepage "https://github.com/lishouxian/ScenePick"
 
   depends_on macos: ">= :ventura"
