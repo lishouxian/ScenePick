@@ -1,4 +1,4 @@
-.PHONY: test build icon app
+.PHONY: test build icon app dist clean
 
 test:
 	swift run BingWallpapersCoreSelfTest
@@ -9,5 +9,11 @@ build:
 icon:
 	swift Scripts/generate-icon.swift
 
-app: icon
+app:
 	./Scripts/build-app.sh
+
+dist: app
+	./Scripts/package-release.sh
+
+clean:
+	rm -rf Build Dist

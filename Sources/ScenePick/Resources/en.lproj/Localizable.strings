@@ -14,14 +14,16 @@
 "action.source" = "Source";
 
 "menu.openApp" = "Open App";
-"menu.updateDaily" = "Update Daily";
+"menu.updateDaily" = "Auto-Update Wallpaper Daily";
 "menu.quit" = "Quit";
+"menu.setPrevious" = "Set Previous Wallpaper";
+"menu.setNext" = "Set Next Wallpaper";
 "menu.setLatest" = "Set Latest Wallpaper";
 "menu.settingLatest" = "Setting Latest Wallpaper...";
 "menu.setLatestFailed" = "Set Latest Wallpaper Failed";
 "menu.latestSet" = "Latest Wallpaper Set";
 
-"accessibility.dailyUpdate" = "Daily Update";
+"accessibility.dailyUpdate" = "Auto-Update Wallpaper Daily";
 "state.on" = "On";
 "state.off" = "Off";
 
@@ -30,8 +32,8 @@
 "language.simplifiedChinese" = "Chinese (Simplified)";
 
 "sidebar.region" = "Region";
-"dailyUpdate.title" = "Daily Update";
-"dailyUpdate.help" = "Update the latest wallpaper daily while the app is running.";
+"dailyUpdate.title" = "Auto-Update Wallpaper Daily";
+"dailyUpdate.help" = "Automatically switch to the latest wallpaper daily while the app is running.";
 
 "loading.bingArchive" = "Loading Bing archive";
 "empty.title" = "No Wallpapers";

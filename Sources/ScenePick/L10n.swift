@@ -2,6 +2,8 @@ import BingWallpapersCore
 import Foundation
 
 enum L10n {
+    private static let resourceBundle = Bundle.scenePickResourceBundle(named: "ScenePick_ScenePick")
+
     static func string(_ key: String) -> String {
         NSLocalizedString(key, bundle: localizedBundle, comment: "")
     }
@@ -16,12 +18,30 @@ enum L10n {
         ) ?? .system
 
         guard language != .system,
-              let path = Bundle.module.path(forResource: language.rawValue, ofType: "lproj"),
+              let path = resourceBundle.path(forResource: language.rawValue, ofType: "lproj"),
               let bundle = Bundle(path: path) else {
-            return .module
+            return resourceBundle
         }
 
         return bundle
+    }
+}
+
+private extension Bundle {
+    static func scenePickResourceBundle(named name: String) -> Bundle {
+        let bundleName = "\(name).bundle"
+        let candidates = [
+            Bundle.main.resourceURL?.appendingPathComponent(bundleName),
+            Bundle.main.bundleURL.appendingPathComponent(bundleName)
+        ]
+
+        for candidate in candidates {
+            if let candidate, let bundle = Bundle(url: candidate) {
+                return bundle
+            }
+        }
+
+        return .main
     }
 }
 

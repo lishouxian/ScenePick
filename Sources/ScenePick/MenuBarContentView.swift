@@ -26,6 +26,34 @@ struct MenuBarContentView: View {
 
         Button {
             Task {
+                await store.setAdjacentAsDesktop(
+                    step: -1,
+                    market: market,
+                    resolution: resolution,
+                    fillMode: fillMode
+                )
+            }
+        } label: {
+            Label(L10n.string("menu.setPrevious"), systemImage: "chevron.left")
+        }
+        .disabled(store.isLoading || store.isSettingDesktop)
+
+        Button {
+            Task {
+                await store.setAdjacentAsDesktop(
+                    step: 1,
+                    market: market,
+                    resolution: resolution,
+                    fillMode: fillMode
+                )
+            }
+        } label: {
+            Label(L10n.string("menu.setNext"), systemImage: "chevron.right")
+        }
+        .disabled(store.isLoading || store.isSettingDesktop)
+
+        Button {
+            Task {
                 latestWallpaperStatus = .running
                 await store.setLatestAsDesktop(
                     market: market,
@@ -49,7 +77,7 @@ struct MenuBarContentView: View {
     }
 
     private var latestWallpaperTitle: String {
-        if store.isLoading || store.isSettingDesktop || latestWallpaperStatus == .running {
+        if latestWallpaperStatus == .running {
             return L10n.string("menu.settingLatest")
         }
         if latestWallpaperStatus == .failed {
@@ -62,7 +90,7 @@ struct MenuBarContentView: View {
     }
 
     private var latestWallpaperSystemImage: String {
-        if store.isLoading || store.isSettingDesktop || latestWallpaperStatus == .running {
+        if latestWallpaperStatus == .running {
             return "hourglass"
         }
         if latestWallpaperStatus == .failed {

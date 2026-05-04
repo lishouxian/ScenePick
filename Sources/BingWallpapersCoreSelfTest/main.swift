@@ -5,13 +5,15 @@ import Foundation
 struct BingWallpapersCoreSelfTest {
     static func main() throws {
         try decodesBingArchiveAndBuildsHighResolutionURLs()
+        try usesCopyrightDescriptionWhenBingReturnsPlaceholderTitle()
         try fileNameIsStableAndSafeForCache()
+        try fileNameIncludesImageIdentityToAvoidCrossMarketCollisions()
         try archiveURLUsesBingArchiveEndpointAndClampsCount()
         try archiveURLClampsOffsetToBingLimit()
         try writesCacheFileIntoConfiguredDirectory()
         try detectsCachedFiles()
 
-        print("BingWallpapersCoreSelfTest: 6 tests passed")
+        print("BingWallpapersCoreSelfTest: 8 tests passed")
     }
 
     private static func decodesBingArchiveAndBuildsHighResolutionURLs() throws {
@@ -45,9 +47,33 @@ struct BingWallpapersCoreSelfTest {
         )
         let fileName = image.fileName(resolution: .uhd)
 
-        try expect(fileName == "20260503-uhd-desert-geometry.jpg", "cache file name")
+        try expect(fileName == "20260503-uhd-fixturehash-desert-geometry.jpg", "cache file name")
         try expect(!fileName.contains(" "), "cache file name should not contain spaces")
         try expect(!fileName.contains("/"), "cache file name should not contain slashes")
+    }
+
+    private static func usesCopyrightDescriptionWhenBingReturnsPlaceholderTitle() throws {
+        let image = try require(
+            try JSONDecoder().decode(BingArchiveResponse.self, from: australianTitleFixture).images.first,
+            "Australian archive image"
+        )
+
+        try expect(
+            image.displayTitle == "Leopard sleeping in a tree in the savannah, Masai Mara National Reserve, Kenya",
+            "placeholder title fallback"
+        )
+    }
+
+    private static func fileNameIncludesImageIdentityToAvoidCrossMarketCollisions() throws {
+        let archive = try JSONDecoder().decode(
+            BingArchiveResponse.self,
+            from: crossMarketCollisionFixture
+        )
+
+        let first = try require(archive.images.first, "first archive image")
+        let second = try require(archive.images.dropFirst().first, "second archive image")
+
+        try expect(first.fileName(resolution: .preview) != second.fileName(resolution: .preview), "cache file names should not collide")
     }
 
     private static func archiveURLUsesBingArchiveEndpointAndClampsCount() throws {
@@ -173,6 +199,45 @@ struct BingWallpapersCoreSelfTest {
           "copyright": "Fixture",
           "copyrightlink": "https://www.bing.com/search?q=fixture",
           "title": "Fixture Image"
+        }
+      ]
+    }
+    """.utf8)
+
+    private static let australianTitleFixture = Data("""
+    {
+      "images": [
+        {
+          "startdate": "20260503",
+          "url": "/th?id=OHR.MasaiLeopard_ROW2641665263_UHD.jpg&rf=LaDigue_UHD.jpg&pid=hp&w=1920&h=1080&rs=1&c=4",
+          "urlbase": "/th?id=OHR.MasaiLeopard_ROW2641665263",
+          "copyright": "Leopard sleeping in a tree in the savannah, Masai Mara National Reserve, Kenya (© Klein & Hubert/Nature Picture Library)",
+          "copyrightlink": "https://www.bing.com/search?q=Masai+Mara+National+Reserve&form=hpcapt",
+          "title": "Info",
+          "hsh": "3692b86299a509b1ab9c5aa8f722b0a6"
+        }
+      ]
+    }
+    """.utf8)
+
+    private static let crossMarketCollisionFixture = Data("""
+    {
+      "images": [
+        {
+          "startdate": "20260503",
+          "url": "/th?id=OHR.SharedTitle_EN-US1234567890_1366x768.jpg",
+          "urlbase": "/th?id=OHR.SharedTitle_EN-US1234567890",
+          "copyright": "US fixture",
+          "copyrightlink": "https://www.bing.com/search?q=fixture",
+          "title": "Shared Title"
+        },
+        {
+          "startdate": "20260503",
+          "url": "/th?id=OHR.SharedTitle_EN-GB1234567890_1366x768.jpg",
+          "urlbase": "/th?id=OHR.SharedTitle_EN-GB1234567890",
+          "copyright": "UK fixture",
+          "copyrightlink": "https://www.bing.com/search?q=fixture",
+          "title": "Shared Title"
         }
       ]
     }

@@ -158,6 +158,25 @@ final class WallpaperStore: ObservableObject {
         await setAsDesktop(latest, resolution: resolution, fillMode: fillMode)
     }
 
+    func setAdjacentAsDesktop(
+        step: Int,
+        market: BingMarket,
+        resolution: WallpaperResolution,
+        fillMode: WallpaperFillMode
+    ) async {
+        if wallpapers.isEmpty {
+            await load(market: market)
+        }
+
+        guard let wallpaper = wallpaperAfterMovingSelection(by: step) else {
+            errorMessage = L10n.string("error.selectWallpaperFirst")
+            return
+        }
+
+        selectedWallpaperID = wallpaper.id
+        await setAsDesktop(wallpaper, resolution: resolution, fillMode: fillMode)
+    }
+
     func clearCache() {
         do {
             try cache.removeAll()
@@ -215,6 +234,19 @@ final class WallpaperStore: ObservableObject {
 
         let nextIndex = (index + step + wallpapers.count) % wallpapers.count
         self.selectedWallpaperID = wallpapers[nextIndex].id
+    }
+
+    private func wallpaperAfterMovingSelection(by step: Int) -> BingImage? {
+        guard !wallpapers.isEmpty else {
+            return nil
+        }
+
+        let currentIndex = selectedWallpaperID
+            .flatMap { selectedID in
+                wallpapers.firstIndex { $0.id == selectedID }
+            } ?? 0
+        let nextIndex = (currentIndex + step + wallpapers.count) % wallpapers.count
+        return wallpapers[nextIndex]
     }
 
     private func prefetchPreviewImages(_ images: [BingImage]) {

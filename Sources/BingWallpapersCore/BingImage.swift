@@ -14,15 +14,34 @@ public struct BingImage: Decodable, Equatable, Hashable, Identifiable, Sendable 
     public let hash: String?
 
     public var id: String {
-        [startDate, hash ?? urlBase].joined(separator: "-")
+        [startDate, imageIdentitySource].joined(separator: "-")
     }
 
     public var displayTitle: String {
-        title.trimmingCharacters(in: .whitespacesAndNewlines)
+        let normalizedTitle = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !normalizedTitle.isPlaceholderTitle else {
+            return copyrightDisplayTitle
+        }
+
+        return normalizedTitle
     }
 
     public var copyrightText: String {
         copyright.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private var copyrightDisplayTitle: String {
+        let normalizedCopyright = copyrightText
+        guard !normalizedCopyright.isEmpty else {
+            return ""
+        }
+
+        if let attributionRange = normalizedCopyright.range(of: " (©") {
+            return String(normalizedCopyright[..<attributionRange.lowerBound])
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+
+        return normalizedCopyright
     }
 
     public var previewURL: URL {
@@ -51,7 +70,43 @@ public struct BingImage: Decodable, Equatable, Hashable, Identifiable, Sendable 
             .joined(separator: "-")
 
         let base = readableTitle.isEmpty ? "bing-wallpaper" : readableTitle
-        return "\(startDate)-\(resolution.fileToken)-\(base).jpg"
+        return "\(startDate)-\(resolution.fileToken)-\(safeFileToken(from: imageIdentitySource))-\(base).jpg"
+    }
+
+    private var imageIdentitySource: String {
+        if let hash, !hash.isEmpty {
+            return hash
+        }
+
+        if let bingImageID {
+            return bingImageID
+        }
+
+        return urlBase
+    }
+
+    private var bingImageID: String? {
+        guard let components = URLComponents(
+            url: absoluteBingURL(for: urlBase),
+            resolvingAgainstBaseURL: false
+        ) else {
+            return nil
+        }
+
+        return components.queryItems?
+            .first { $0.name == "id" }?
+            .value
+            .flatMap { $0.isEmpty ? nil : $0 }
+    }
+
+    private func safeFileToken(from value: String) -> String {
+        let token = value
+            .lowercased()
+            .components(separatedBy: CharacterSet.alphanumerics.inverted)
+            .filter { !$0.isEmpty }
+            .joined(separator: "-")
+
+        return token.isEmpty ? "bing-image" : String(token.prefix(72))
     }
 
     private func absoluteBingURL(for path: String) -> URL {
@@ -75,6 +130,12 @@ public struct BingImage: Decodable, Equatable, Hashable, Identifiable, Sendable 
         case copyrightLink = "copyrightlink"
         case title
         case hash = "hsh"
+    }
+}
+
+private extension String {
+    var isPlaceholderTitle: Bool {
+        caseInsensitiveCompare("info") == .orderedSame
     }
 }
 

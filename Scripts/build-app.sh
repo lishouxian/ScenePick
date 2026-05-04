@@ -6,6 +6,19 @@ PRODUCT_NAME="ScenePick"
 APP_NAME="ScenePick"
 DISPLAY_NAME="拾景"
 BUNDLE_ID="com.xian.ScenePick"
+APP_VERSION="${APP_VERSION:-1.0.0}"
+APP_BUILD="${APP_BUILD:-1}"
+CODESIGN_IDENTITY="${CODESIGN_IDENTITY:--}"
+
+clean_bundle_metadata() {
+  local path="$1"
+
+  xattr -cr "$path" 2>/dev/null || true
+  xattr -rd com.apple.FinderInfo "$path" 2>/dev/null || true
+  xattr -rd 'com.apple.fileprovider.fpfs#P' "$path" 2>/dev/null || true
+  xattr -rd com.apple.ResourceFork "$path" 2>/dev/null || true
+  xattr -rd com.apple.macl "$path" 2>/dev/null || true
+}
 
 cd "$ROOT_DIR"
 swift build -c release --product "$PRODUCT_NAME"
@@ -15,12 +28,18 @@ if [ ! -f "$ROOT_DIR/Resources/AppIcon.icns" ]; then
 fi
 
 BIN_DIR="$(swift build -c release --show-bin-path)"
-APP_DIR="$ROOT_DIR/Build/${APP_NAME}.app"
-CONTENTS_DIR="$APP_DIR/Contents"
+BUILD_DIR="$ROOT_DIR/Build"
+APP_DIR="$BUILD_DIR/${APP_NAME}.app"
+STAGING_ROOT="$(mktemp -d)"
+STAGING_APP_DIR="$STAGING_ROOT/${APP_NAME}.app"
+CONTENTS_DIR="$STAGING_APP_DIR/Contents"
 MACOS_DIR="$CONTENTS_DIR/MacOS"
 RESOURCES_DIR="$CONTENTS_DIR/Resources"
 
-rm -rf "$APP_DIR"
+trap 'rm -rf "$STAGING_ROOT"' EXIT
+
+mkdir -p "$BUILD_DIR"
+rm -rf "$APP_DIR" "$STAGING_APP_DIR"
 mkdir -p "$MACOS_DIR" "$RESOURCES_DIR"
 cp "$BIN_DIR/$PRODUCT_NAME" "$MACOS_DIR/$PRODUCT_NAME"
 if [ -f "$ROOT_DIR/Resources/AppIcon.icns" ]; then
@@ -64,9 +83,9 @@ cat > "$CONTENTS_DIR/Info.plist" <<PLIST
   <key>CFBundlePackageType</key>
   <string>APPL</string>
   <key>CFBundleShortVersionString</key>
-  <string>1.0.0</string>
+  <string>${APP_VERSION}</string>
   <key>CFBundleVersion</key>
-  <string>1</string>
+  <string>${APP_BUILD}</string>
   <key>LSMinimumSystemVersion</key>
   <string>13.0</string>
   <key>LSUIElement</key>
@@ -80,6 +99,16 @@ cat > "$CONTENTS_DIR/Info.plist" <<PLIST
 PLIST
 
 printf "APPL????" > "$CONTENTS_DIR/PkgInfo"
-touch "$APP_DIR"
+
+find "$STAGING_APP_DIR" -name ".DS_Store" -delete
+touch "$STAGING_APP_DIR"
+clean_bundle_metadata "$STAGING_APP_DIR"
+codesign --force --deep --sign "$CODESIGN_IDENTITY" "$STAGING_APP_DIR"
+codesign --verify --deep --strict --verbose=2 "$STAGING_APP_DIR"
+
+ditto --norsrc "$STAGING_APP_DIR" "$APP_DIR"
+clean_bundle_metadata "$APP_DIR"
+codesign --force --deep --sign "$CODESIGN_IDENTITY" "$APP_DIR"
+codesign --verify --deep --strict --verbose=2 "$APP_DIR"
 
 echo "Built $APP_DIR"
