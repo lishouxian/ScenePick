@@ -40,6 +40,11 @@ jobs:
           export APP_VERSION APP_BUILD
           make dist
 
+      - name: Verify release checksums
+        run: |
+          cd Dist
+          shasum -a 256 -c SHA256SUMS
+
       - name: Upload build artifacts
         uses: actions/upload-artifact@v7
         with:

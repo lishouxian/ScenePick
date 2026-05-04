@@ -52,7 +52,10 @@ hdiutil create \
   "$DIST_DIR/${APP_NAME}.dmg"
 hdiutil verify "$DIST_DIR/${APP_NAME}.dmg"
 
-shasum -a 256 "$DIST_DIR/${APP_NAME}.dmg" "$DIST_DIR/${APP_NAME}.zip" > "$DIST_DIR/SHA256SUMS"
+(
+  cd "$DIST_DIR"
+  shasum -a 256 "${APP_NAME}.dmg" "${APP_NAME}.zip" > SHA256SUMS
+)
 
 echo "Packaged:"
 echo "  $DIST_DIR/${APP_NAME}.dmg"
