@@ -1,151 +1,58 @@
 # ScenePick / 拾景
 
-ScenePick (拾景) is a native macOS menu bar app for browsing Bing daily wallpapers, previewing images, and applying them as the desktop wallpaper across all connected displays.
+把 Bing 每日壁纸收进菜单栏。想看图时打开，想换桌面时点一下；平时它安静待在状态栏里，不占 Dock，不打扰。
 
-## Features
+<p>
+  <img src="docs/screenshots/main-window.png" alt="ScenePick main window" width="68%">
+  <img src="docs/screenshots/menu-bar.png" alt="ScenePick menu bar actions" width="28%">
+</p>
 
-- Browse the latest Bing wallpaper archive by region.
-- Preview wallpapers before applying them.
-- Apply the selected, latest, previous, or next wallpaper from the app or menu bar.
-- Cache metadata, previews, and downloaded wallpaper files for faster switching.
-- Choose UHD, HD 1080p, or preview quality.
-- Choose fill or fit desktop scaling.
-- Enable daily automatic wallpaper switching while the app is running.
-- Use English or Simplified Chinese UI.
-- Run as a pure menu bar app with no Dock icon.
+## 它适合谁
 
-## Install
+ScenePick 适合想让桌面每天有点变化，但又不想被一个完整图片管理器打扰的人。
 
-### Download DMG
+你可以把它当成一个很轻的壁纸遥控器：浏览最近的 Bing 每日壁纸，预览画面，选择地区和画质，然后把喜欢的那一张设为桌面。菜单栏里也可以直接设置上一张、下一张或最新壁纸。
 
-Download `ScenePick.dmg` from the GitHub Release, open it, then drag `ScenePick.app` into `Applications`.
+## 亮点
 
-DMG vs ZIP:
+- 状态栏常驻，不显示 Dock 图标。
+- 支持中国、美国、日本、英国、德国、法国、加拿大、澳大利亚等地区。
+- 支持 UHD、HD 1080p 和预览图质量。
+- 支持填满屏幕或适合屏幕。
+- 缓存预览图和已下载壁纸，切换更快。
+- 可开启“每日自动换壁纸”。
+- 支持中文和英文界面。
 
-- DMG gives a more Mac-native install experience and can include an `Applications` shortcut for drag-install.
-- ZIP is simpler and useful for CI artifacts or manual copying.
-- Neither format bypasses Gatekeeper. For public distribution, sign with a Developer ID certificate and notarize the DMG or ZIP.
+## 安装
 
-If macOS blocks an unsigned local build, remove quarantine after installing:
-
-```bash
-xattr -dr com.apple.quarantine /Applications/ScenePick.app
-```
-
-### Homebrew
-
-This repo includes a Cask template at `Casks/scene-pick.rb`; the published tap lives at `lishouxian/homebrew-tap`.
-
-Install with:
+推荐使用 Homebrew：
 
 ```bash
 brew tap lishouxian/tap
 brew install --cask scene-pick
 ```
 
-Update or uninstall with:
+更新或卸载：
 
 ```bash
 brew upgrade --cask scene-pick
 brew uninstall --cask scene-pick
 ```
 
-The current Cask removes quarantine after installation because the public build is ad-hoc signed. For broader public distribution, configure Developer ID signing and Apple notarization in the release workflow.
+安装后打开 `ScenePick.app`，右上角菜单栏会出现拾景图标。点击图标可以打开应用、切换上一张/下一张、设置最新壁纸，或开启每日自动换壁纸。
 
-If the GitHub repository is not `lishouxian/ScenePick`, update the `url` and `homepage` in `Casks/scene-pick.rb` and the tap copy before publishing the Cask.
+## 如果 macOS 提示无法打开
 
-## Development
-
-Requirements:
-
-- macOS 13 or later
-- Xcode or Command Line Tools with Swift 6 support
-
-Run the app during development:
+当前公开版本使用 ad-hoc 签名。Homebrew 安装会自动处理 quarantine；如果你手动下载或复制应用后遇到“无法打开”，可以执行：
 
 ```bash
-swift run ScenePick
+xattr -dr com.apple.quarantine /Applications/ScenePick.app
 ```
 
-Run tests:
+然后重新打开应用。
 
-```bash
-make test
-```
+## 可选：下载 DMG
 
-This project uses a small self-test executable because the Command Line Tools environment on this machine does not expose `XCTest` or Swift `Testing`.
+也可以从 [GitHub Releases](https://github.com/lishouxian/ScenePick/releases/latest) 下载 `ScenePick.dmg`，打开后把 `ScenePick.app` 拖到 `Applications`。
 
-Build the debug product:
-
-```bash
-make build
-```
-
-## Packaging
-
-Build a release `.app` bundle:
-
-```bash
-make app
-```
-
-The app bundle is written to:
-
-```text
-Build/ScenePick.app
-```
-
-Use `make dist` for files that will be copied to another machine. The packaging step stages a clean copy before signing, which avoids extended-attribute issues that can appear in synced folders such as `Documents`.
-
-Build distributable DMG and ZIP artifacts:
-
-```bash
-make dist
-```
-
-Artifacts are written to:
-
-```text
-Dist/ScenePick.dmg
-Dist/ScenePick.zip
-Dist/SHA256SUMS
-```
-
-The packaging scripts clear common macOS extended attributes, ad-hoc sign the app by default, and verify the resulting bundle. To sign with a real certificate:
-
-```bash
-CODESIGN_IDENTITY="Developer ID Application: Your Name (TEAMID)" make dist
-```
-
-Version metadata can be injected by CI or local release builds:
-
-```bash
-APP_VERSION=1.0.1 APP_BUILD=42 make dist
-```
-
-## GitHub Actions Release
-
-The workflow in `.github/workflows/build.yml` runs on pushes, pull requests, manual dispatch, and `v*` tags.
-
-It does the following:
-
-- Runs `make test`.
-- Builds `ScenePick.app`.
-- Packages `ScenePick.dmg`, `ScenePick.zip`, and `SHA256SUMS`.
-- Uploads the files as workflow artifacts.
-- On a tag like `v1.0.1`, creates a GitHub Release and uploads the DMG, ZIP, and checksum file.
-
-To cut a release:
-
-```bash
-git tag v1.0.1
-git push origin v1.0.1
-```
-
-## Icon
-
-Regenerate the app icon:
-
-```bash
-make icon
-```
+如果 DMG 安装后仍被系统拦截，同样执行上面的 `xattr` 命令。
