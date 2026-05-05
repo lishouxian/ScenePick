@@ -32,6 +32,7 @@ struct ContentView: View {
                 resolution: selectedResolution,
                 fillMode: fillMode
             )
+            .id(selectedLanguageRaw)
         }
         .toolbar {
             ToolbarItemGroup(placement: .primaryAction) {
@@ -89,6 +90,7 @@ struct ContentView: View {
                 } label: {
                     Label(L10n.string("toolbar.more"), systemImage: "ellipsis.circle")
                 }
+                .id(selectedLanguageRaw)
             }
         }
         .onChange(of: selectedMarketRaw) { newValue in

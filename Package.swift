@@ -35,6 +35,10 @@ let package = Package(
         .executableTarget(
             name: "BingWallpapersCoreSelfTest",
             dependencies: ["BingWallpapersCore"]
+        ),
+        .executableTarget(
+            name: "ScenePickLocalizationSelfTest",
+            dependencies: ["BingWallpapersCore"]
         )
     ]
 )

@@ -56,6 +56,7 @@ struct ScenePickApp: App {
                 market: selectedMarket,
                 resolution: selectedResolution,
                 fillMode: fillMode,
+                languageRaw: selectedLanguageRaw,
                 dailyAutoUpdateEnabled: $dailyAutoUpdateEnabled,
                 openApp: {
                     NSApp.activate(ignoringOtherApps: true)

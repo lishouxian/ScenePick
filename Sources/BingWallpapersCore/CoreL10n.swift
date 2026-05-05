@@ -14,8 +14,10 @@ enum CoreL10n {
     private static var localizedBundle: Bundle {
         guard let languageCode = BingWallpaperDefaults.store.string(forKey: BingWallpaperDefaultKeys.selectedLanguage),
               languageCode != "system",
-              let path = resourceBundle.path(forResource: languageCode, ofType: "lproj"),
-              let bundle = Bundle(path: path) else {
+              let bundle = LocalizedBundleResolver.bundle(
+                in: resourceBundle,
+                languageCode: languageCode
+              ) else {
             return resourceBundle
         }
 

@@ -7,73 +7,77 @@ struct MenuBarContentView: View {
     let market: BingMarket
     let resolution: WallpaperResolution
     let fillMode: WallpaperFillMode
+    let languageRaw: String
     @Binding var dailyAutoUpdateEnabled: Bool
     let openApp: () -> Void
     @State private var latestWallpaperStatus = LatestWallpaperMenuStatus.idle
 
     var body: some View {
-        Button {
-            openApp()
-        } label: {
-            Label(L10n.string("menu.openApp"), systemImage: "macwindow")
-        }
-
-        Button {
-            dailyAutoUpdateEnabled.toggle()
-        } label: {
-            Label(L10n.string("menu.updateDaily"), systemImage: dailyAutoUpdateEnabled ? "checkmark.circle.fill" : "circle")
-        }
-
-        Button {
-            Task {
-                await store.setAdjacentAsDesktop(
-                    step: -1,
-                    market: market,
-                    resolution: resolution,
-                    fillMode: fillMode
-                )
+        Group {
+            Button {
+                openApp()
+            } label: {
+                Label(L10n.string("menu.openApp"), systemImage: "macwindow")
             }
-        } label: {
-            Label(L10n.string("menu.setPrevious"), systemImage: "chevron.left")
-        }
-        .disabled(store.isLoading || store.isSettingDesktop)
 
-        Button {
-            Task {
-                await store.setAdjacentAsDesktop(
-                    step: 1,
-                    market: market,
-                    resolution: resolution,
-                    fillMode: fillMode
-                )
+            Button {
+                dailyAutoUpdateEnabled.toggle()
+            } label: {
+                Label(L10n.string("menu.updateDaily"), systemImage: dailyAutoUpdateEnabled ? "checkmark.circle.fill" : "circle")
             }
-        } label: {
-            Label(L10n.string("menu.setNext"), systemImage: "chevron.right")
-        }
-        .disabled(store.isLoading || store.isSettingDesktop)
 
-        Button {
-            Task {
-                latestWallpaperStatus = .running
-                await store.setLatestAsDesktop(
-                    market: market,
-                    resolution: resolution,
-                    fillMode: fillMode
-                )
-                latestWallpaperStatus = store.errorMessage == nil ? .succeeded : .failed
+            Button {
+                Task {
+                    await store.setAdjacentAsDesktop(
+                        step: -1,
+                        market: market,
+                        resolution: resolution,
+                        fillMode: fillMode
+                    )
+                }
+            } label: {
+                Label(L10n.string("menu.setPrevious"), systemImage: "chevron.left")
             }
-        } label: {
-            Label(latestWallpaperTitle, systemImage: latestWallpaperSystemImage)
-        }
-        .disabled(store.isLoading || store.isSettingDesktop)
+            .disabled(store.isLoading || store.isSettingDesktop)
 
-        Divider()
+            Button {
+                Task {
+                    await store.setAdjacentAsDesktop(
+                        step: 1,
+                        market: market,
+                        resolution: resolution,
+                        fillMode: fillMode
+                    )
+                }
+            } label: {
+                Label(L10n.string("menu.setNext"), systemImage: "chevron.right")
+            }
+            .disabled(store.isLoading || store.isSettingDesktop)
 
-        Button {
-            NSApp.terminate(nil)
-        } label: {
-            Label(L10n.string("menu.quit"), systemImage: "power")
+            Button {
+                Task {
+                    latestWallpaperStatus = .running
+                    await store.setLatestAsDesktop(
+                        market: market,
+                        resolution: resolution,
+                        fillMode: fillMode
+                    )
+                    latestWallpaperStatus = store.errorMessage == nil ? .succeeded : .failed
+                }
+            } label: {
+                Label(latestWallpaperTitle, systemImage: latestWallpaperSystemImage)
+            }
+            .disabled(store.isLoading || store.isSettingDesktop)
+
+            Divider()
+
+            Button {
+                NSApp.terminate(nil)
+            } label: {
+                Label(L10n.string("menu.quit"), systemImage: "power")
+            }
         }
+        .id(languageRaw)
     }
 
     private var latestWallpaperTitle: String {

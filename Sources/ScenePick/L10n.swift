@@ -18,8 +18,10 @@ enum L10n {
         ) ?? .system
 
         guard language != .system,
-              let path = resourceBundle.path(forResource: language.rawValue, ofType: "lproj"),
-              let bundle = Bundle(path: path) else {
+              let bundle = LocalizedBundleResolver.bundle(
+                in: resourceBundle,
+                languageCode: language.rawValue
+              ) else {
             return resourceBundle
         }
 
