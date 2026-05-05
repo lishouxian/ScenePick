@@ -13,7 +13,7 @@
 "action.setDesktop" = "设为桌面";
 "action.source" = "来源";
 
-"menu.openApp" = "打开应用";
+"menu.openApp" = "打开拾景";
 "menu.updateDaily" = "每日自动换壁纸";
 "menu.quit" = "退出";
 "menu.setPrevious" = "设置上一张";
@@ -38,7 +38,7 @@
 "loading.bingArchive" = "正在加载 Bing 壁纸";
 "empty.title" = "暂无壁纸";
 "empty.subtitle" = "重新加载壁纸以获取最新精选。";
-"preview.badge" = "预览";
+"preview.badge" = "预览 1366x768";
 
 "status.ready" = "就绪。";
 "status.reloading" = "正在重新加载壁纸。";
@@ -65,9 +65,9 @@
 "market.canada" = "加拿大";
 "market.australia" = "澳大利亚";
 
-"resolution.uhd" = "UHD";
+"resolution.uhd" = "UHD 4K";
 "resolution.fullHD" = "HD 1080p";
-"resolution.preview" = "预览";
+"resolution.preview" = "预览 (1366x768)";
 
 "fillMode.fillScreen" = "填满屏幕";
 "fillMode.fitScreen" = "适合屏幕";

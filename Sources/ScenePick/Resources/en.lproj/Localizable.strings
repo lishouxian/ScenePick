@@ -13,7 +13,7 @@
 "action.setDesktop" = "Set Desktop";
 "action.source" = "Source";
 
-"menu.openApp" = "Open App";
+"menu.openApp" = "Open ScenePick";
 "menu.updateDaily" = "Auto-Update Wallpaper Daily";
 "menu.quit" = "Quit";
 "menu.setPrevious" = "Set Previous Wallpaper";
@@ -38,7 +38,7 @@
 "loading.bingArchive" = "Loading Bing archive";
 "empty.title" = "No Wallpapers";
 "empty.subtitle" = "Reload wallpapers to load the latest picks.";
-"preview.badge" = "Preview";
+"preview.badge" = "Preview 1366x768";
 
 "status.ready" = "Ready.";
 "status.reloading" = "Reloading wallpapers.";
@@ -65,9 +65,9 @@
 "market.canada" = "Canada";
 "market.australia" = "Australia";
 
-"resolution.uhd" = "UHD";
+"resolution.uhd" = "UHD 4K";
 "resolution.fullHD" = "HD 1080p";
-"resolution.preview" = "Preview";
+"resolution.preview" = "Preview (1366x768)";
 
 "fillMode.fillScreen" = "Fill Screen";
 "fillMode.fitScreen" = "Fit Screen";

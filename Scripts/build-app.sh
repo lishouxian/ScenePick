@@ -4,10 +4,10 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 PRODUCT_NAME="ScenePick"
 APP_NAME="ScenePick"
-DISPLAY_NAME="拾景"
+DISPLAY_NAME="ScenePick"
 BUNDLE_ID="com.xian.ScenePick"
-APP_VERSION="${APP_VERSION:-1.0.0}"
-APP_BUILD="${APP_BUILD:-1}"
+APP_VERSION="${APP_VERSION:-1.0.1}"
+APP_BUILD="${APP_BUILD:-2}"
 CODESIGN_IDENTITY="${CODESIGN_IDENTITY:--}"
 
 clean_bundle_metadata() {
