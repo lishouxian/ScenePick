@@ -156,7 +156,7 @@ struct BingWallpapersCoreSelfTest {
 
     private static func dailyUpdateRunsAfterScheduledTimeWhenNotRunToday() throws {
         let schedule = DailyAutoUpdateSchedule(calendar: utcCalendar)
-        let now = utcDate(year: 2026, month: 5, day: 7, hour: 8, minute: 35)
+        let now = utcDate(year: 2026, month: 5, day: 7, hour: 0, minute: 5)
         let yesterday = utcDate(year: 2026, month: 5, day: 6, hour: 9, minute: 0)
 
         try expect(schedule.shouldRun(now: now, lastRun: nil), "daily update should run after scheduled time")
@@ -165,8 +165,8 @@ struct BingWallpapersCoreSelfTest {
 
     private static func dailyUpdateSkipsWhenAlreadyRunToday() throws {
         let schedule = DailyAutoUpdateSchedule(calendar: utcCalendar)
-        let now = utcDate(year: 2026, month: 5, day: 7, hour: 9, minute: 0)
-        let today = utcDate(year: 2026, month: 5, day: 7, hour: 8, minute: 35)
+        let now = utcDate(year: 2026, month: 5, day: 7, hour: 1, minute: 0)
+        let today = utcDate(year: 2026, month: 5, day: 7, hour: 0, minute: 5)
 
         try expect(!schedule.shouldRun(now: now, lastRun: today), "daily update should only run once per day")
     }

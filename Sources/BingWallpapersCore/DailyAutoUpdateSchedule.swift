@@ -12,8 +12,8 @@ public struct DailyAutoUpdateSchedule: Sendable {
     public init(
         checkInterval: TimeInterval = 5 * 60,
         maximumRandomOffset: TimeInterval = 60,
-        scheduledHour: Int = 8,
-        scheduledMinute: Int = 30,
+        scheduledHour: Int = 0,
+        scheduledMinute: Int = 0,
         calendar: Calendar = .current
     ) {
         self.checkInterval = checkInterval
