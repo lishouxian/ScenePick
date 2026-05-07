@@ -6,16 +6,16 @@ final class InAppDailyWallpaperUpdater {
     static let shared = InAppDailyWallpaperUpdater()
 
     private let defaults: UserDefaults
-    private let calendar: Calendar
+    private let schedule: DailyAutoUpdateSchedule
     private var observer: NSObjectProtocol?
     private var task: Task<Void, Never>?
 
     init(
         defaults: UserDefaults = BingWallpaperDefaults.store,
-        calendar: Calendar = .current
+        schedule: DailyAutoUpdateSchedule = .standard
     ) {
         self.defaults = defaults
-        self.calendar = calendar
+        self.schedule = schedule
     }
 
     func start() {
@@ -65,20 +65,19 @@ final class InAppDailyWallpaperUpdater {
 
     private func runLoop() async {
         while !Task.isCancelled {
-            let delay = delayUntilNextRun()
-            if delay > 0 {
-                do {
-                    try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
-                } catch {
-                    break
-                }
+            if schedule.shouldRun(lastRun: lastRunDate) {
+                await setLatestWallpaper()
             }
 
             guard isEnabled, !Task.isCancelled else {
                 break
             }
 
-            await setLatestWallpaper()
+            do {
+                try await Task.sleep(nanoseconds: nextCheckDelayNanoseconds())
+            } catch {
+                break
+            }
         }
 
         task = nil
@@ -123,38 +122,13 @@ final class InAppDailyWallpaperUpdater {
         )
     }
 
-    private func delayUntilNextRun(now: Date = Date()) -> TimeInterval {
-        if shouldRunNow(now: now) {
-            return 2
-        }
-
-        return max(2, nextRunDate(after: now).timeIntervalSince(now))
+    private var lastRunDate: Date? {
+        defaults.object(forKey: BingWallpaperDefaultKeys.lastDailyUpdateDate) as? Date
     }
 
-    private func shouldRunNow(now: Date) -> Bool {
-        if let lastRun = defaults.object(forKey: BingWallpaperDefaultKeys.lastDailyUpdateDate) as? Date,
-           calendar.isDate(lastRun, inSameDayAs: now) {
-            return false
-        }
-
-        return now >= scheduledDate(on: now)
-    }
-
-    private func nextRunDate(after now: Date) -> Date {
-        let today = scheduledDate(on: now)
-        if now < today {
-            return today
-        }
-
-        return calendar.date(byAdding: .day, value: 1, to: today) ?? now.addingTimeInterval(24 * 60 * 60)
-    }
-
-    private func scheduledDate(on date: Date) -> Date {
-        calendar.date(
-            bySettingHour: 8,
-            minute: 30,
-            second: 0,
-            of: date
-        ) ?? date
+    private func nextCheckDelayNanoseconds() -> UInt64 {
+        let randomOffset = TimeInterval.random(in: 0...schedule.maximumRandomOffset)
+        let delay = schedule.nextCheckDelay(randomOffset: randomOffset)
+        return UInt64(delay * 1_000_000_000)
     }
 }

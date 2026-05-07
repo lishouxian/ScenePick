@@ -12,8 +12,11 @@ struct BingWallpapersCoreSelfTest {
         try archiveURLClampsOffsetToBingLimit()
         try writesCacheFileIntoConfiguredDirectory()
         try detectsCachedFiles()
+        try dailyUpdateRunsAfterScheduledTimeWhenNotRunToday()
+        try dailyUpdateSkipsWhenAlreadyRunToday()
+        try dailyUpdateCheckDelayIncludesClampedRandomOffset()
 
-        print("BingWallpapersCoreSelfTest: 8 tests passed")
+        print("BingWallpapersCoreSelfTest: 11 tests passed")
     }
 
     private static func decodesBingArchiveAndBuildsHighResolutionURLs() throws {
@@ -151,6 +154,35 @@ struct BingWallpapersCoreSelfTest {
         try cache.removeAll()
     }
 
+    private static func dailyUpdateRunsAfterScheduledTimeWhenNotRunToday() throws {
+        let schedule = DailyAutoUpdateSchedule(calendar: utcCalendar)
+        let now = utcDate(year: 2026, month: 5, day: 7, hour: 8, minute: 35)
+        let yesterday = utcDate(year: 2026, month: 5, day: 6, hour: 9, minute: 0)
+
+        try expect(schedule.shouldRun(now: now, lastRun: nil), "daily update should run after scheduled time")
+        try expect(schedule.shouldRun(now: now, lastRun: yesterday), "daily update should recover when the prior day ran")
+    }
+
+    private static func dailyUpdateSkipsWhenAlreadyRunToday() throws {
+        let schedule = DailyAutoUpdateSchedule(calendar: utcCalendar)
+        let now = utcDate(year: 2026, month: 5, day: 7, hour: 9, minute: 0)
+        let today = utcDate(year: 2026, month: 5, day: 7, hour: 8, minute: 35)
+
+        try expect(!schedule.shouldRun(now: now, lastRun: today), "daily update should only run once per day")
+    }
+
+    private static func dailyUpdateCheckDelayIncludesClampedRandomOffset() throws {
+        let schedule = DailyAutoUpdateSchedule(
+            checkInterval: 300,
+            maximumRandomOffset: 60,
+            calendar: utcCalendar
+        )
+
+        try expect(schedule.nextCheckDelay(randomOffset: 17) == 317, "daily update check delay should include random offset")
+        try expect(schedule.nextCheckDelay(randomOffset: -4) == 300, "daily update random offset should not reduce interval")
+        try expect(schedule.nextCheckDelay(randomOffset: 120) == 360, "daily update random offset should be capped")
+    }
+
     private static func require<T>(_ value: T?, _ message: String) throws -> T {
         guard let value else {
             throw TestFailure(message)
@@ -163,6 +195,30 @@ struct BingWallpapersCoreSelfTest {
         guard condition() else {
             throw TestFailure(message)
         }
+    }
+
+    private static var utcCalendar: Calendar {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(secondsFromGMT: 0)!
+        return calendar
+    }
+
+    private static func utcDate(
+        year: Int,
+        month: Int,
+        day: Int,
+        hour: Int,
+        minute: Int
+    ) -> Date {
+        var components = DateComponents()
+        components.calendar = utcCalendar
+        components.timeZone = TimeZone(secondsFromGMT: 0)
+        components.year = year
+        components.month = month
+        components.day = day
+        components.hour = hour
+        components.minute = minute
+        return components.date!
     }
 
     private struct TestFailure: Error, CustomStringConvertible {
