@@ -37,6 +37,7 @@
 "sidebar.filter.label" = "Wallpaper List";
 "sidebar.filter.all" = "All";
 "sidebar.filter.favorites" = "Favorites";
+"sidebar.filter.recent" = "Recent";
 "dailyUpdate.title" = "Auto-Update Wallpaper Daily";
 "dailyUpdate.help" = "Automatically switch to the latest wallpaper daily while ScenePick is running in the menu bar.";
 
@@ -45,6 +46,8 @@
 "empty.subtitle" = "Reload wallpapers to browse the latest picks.";
 "empty.favorites.title" = "No favorites yet";
 "empty.favorites.subtitle" = "Use the star button to save wallpapers here.";
+"empty.recent.title" = "No recent wallpapers yet";
+"empty.recent.subtitle" = "Set a wallpaper to see recent items.";
 "onboarding.menuBar.title" = "Menu bar access";
 "onboarding.menuBar.description" = "Use the menu bar icon to reopen ScenePick anytime.";
 "onboarding.setDesktop.title" = "One-click desktop";

@@ -123,6 +123,7 @@ struct ContentView: View {
 enum WallpaperListFilter: String, CaseIterable, Identifiable {
     case all
     case favorites
+    case recent
 
     var id: String { rawValue }
 
@@ -132,6 +133,8 @@ enum WallpaperListFilter: String, CaseIterable, Identifiable {
             return L10n.string("sidebar.filter.all")
         case .favorites:
             return L10n.string("sidebar.filter.favorites")
+        case .recent:
+            return L10n.string("sidebar.filter.recent")
         }
     }
 }
@@ -171,6 +174,8 @@ private struct WallpaperSidebar: View {
                 ProgressView(loadingText)
             } else if filter == .favorites && store.favoriteWallpapers.isEmpty {
                 EmptyFavoritesSidebarView()
+            } else if filter == .recent && store.recentWallpapers.isEmpty {
+                EmptyRecentSidebarView()
             }
         }
     }
@@ -235,6 +240,26 @@ private struct EmptyFavoritesSidebarView: View {
     }
 }
 
+private struct EmptyRecentSidebarView: View {
+    var body: some View {
+        VStack(spacing: 8) {
+            Image(systemName: "clock")
+                .font(.system(size: 26, weight: .regular))
+                .foregroundStyle(.secondary)
+
+            Text(L10n.string("empty.recent.title"))
+                .font(.callout.weight(.medium))
+
+            Text(L10n.string("empty.recent.subtitle"))
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+        }
+        .frame(maxWidth: 220)
+        .padding()
+    }
+}
+
 private struct WallpaperDetailView: View {
     @ObservedObject var store: WallpaperStore
     let filter: WallpaperListFilter
@@ -262,7 +287,8 @@ private struct WallpaperDetailView: View {
                                 await store.setSelectedAsDesktop(
                                     resolution: resolution,
                                     fillMode: fillMode,
-                                    filter: filter
+                                    filter: filter,
+                                    market: market
                                 )
                             }
                         } label: {
@@ -318,6 +344,8 @@ private struct WallpaperDetailView: View {
             } else {
                 if filter == .favorites {
                     EmptyFavoritesDetailView()
+                } else if filter == .recent {
+                    EmptyRecentDetailView()
                 } else {
                     EmptyWallpapersView()
                 }
@@ -338,6 +366,27 @@ private struct EmptyFavoritesDetailView: View {
                     .font(.title3.weight(.semibold))
 
                 Text(L10n.string("empty.favorites.subtitle"))
+                    .font(.callout)
+                    .foregroundColor(.secondary)
+            }
+        }
+        .frame(maxWidth: 420)
+        .padding(24)
+    }
+}
+
+private struct EmptyRecentDetailView: View {
+    var body: some View {
+        VStack(spacing: 18) {
+            Image(systemName: "clock")
+                .font(.system(size: 42, weight: .regular))
+                .foregroundColor(.secondary)
+
+            VStack(spacing: 6) {
+                Text(L10n.string("empty.recent.title"))
+                    .font(.title3.weight(.semibold))
+
+                Text(L10n.string("empty.recent.subtitle"))
                     .font(.callout)
                     .foregroundColor(.secondary)
             }

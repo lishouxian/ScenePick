@@ -50,6 +50,10 @@ final class WallpaperStore: ObservableObject {
         libraryDocument.favorites.map { $0.snapshot.image }
     }
 
+    var recentWallpapers: [BingImage] {
+        libraryDocument.recentSet.map { $0.snapshot.image }
+    }
+
     func selectedWallpaper(filter: WallpaperListFilter) -> BingImage? {
         let visibleWallpapers = wallpapers(for: filter)
         return BingImageSelection.selectedImage(
@@ -64,6 +68,8 @@ final class WallpaperStore: ObservableObject {
             return wallpapers
         case .favorites:
             return favoriteWallpapers
+        case .recent:
+            return recentWallpapers
         }
     }
 
@@ -219,7 +225,8 @@ final class WallpaperStore: ObservableObject {
     func setSelectedAsDesktop(
         resolution: WallpaperResolution,
         fillMode: WallpaperFillMode,
-        filter: WallpaperListFilter = .all
+        filter: WallpaperListFilter = .all,
+        market: BingMarket? = nil
     ) async {
         guard let selectedWallpaper = selectedWallpaper(filter: filter) else {
             cancelStatusReset()
@@ -230,7 +237,8 @@ final class WallpaperStore: ObservableObject {
         await setAsDesktop(
             selectedWallpaper,
             resolution: resolution,
-            fillMode: fillMode
+            fillMode: fillMode,
+            market: libraryMarket(for: selectedWallpaper, fallback: market)
         )
     }
 
@@ -250,7 +258,7 @@ final class WallpaperStore: ObservableObject {
         }
 
         selectedWallpaperID = latest.id
-        await setAsDesktop(latest, resolution: resolution, fillMode: fillMode)
+        await setAsDesktop(latest, resolution: resolution, fillMode: fillMode, market: market)
     }
 
     func setAdjacentAsDesktop(
@@ -270,7 +278,7 @@ final class WallpaperStore: ObservableObject {
         }
 
         selectedWallpaperID = wallpaper.id
-        await setAsDesktop(wallpaper, resolution: resolution, fillMode: fillMode)
+        await setAsDesktop(wallpaper, resolution: resolution, fillMode: fillMode, market: market)
     }
 
     func clearCache() {
@@ -293,7 +301,8 @@ final class WallpaperStore: ObservableObject {
     private func setAsDesktop(
         _ wallpaper: BingImage,
         resolution: WallpaperResolution,
-        fillMode: WallpaperFillMode
+        fillMode: WallpaperFillMode,
+        market: BingMarket?
     ) async {
         isSettingDesktop = true
         let wasCached = cache.isCached(for: wallpaper, resolution: resolution)
@@ -312,12 +321,41 @@ final class WallpaperStore: ObservableObject {
                 fileURL: fileURL,
                 fillMode: fillMode
             )
+            recordRecent(wallpaper, market: market)
 
             statusMessage = L10n.format("status.setDesktop", wallpaper.localizedDisplayTitle)
             scheduleStatusReset()
         } catch {
             errorMessage = error.localizedDescription
         }
+    }
+
+    private func recordRecent(_ wallpaper: BingImage, market: BingMarket?) {
+        do {
+            try libraryStore.recordRecent(
+                wallpaper,
+                market: libraryMarket(for: wallpaper, fallback: market)
+            )
+            libraryDocument = libraryStore.document
+        } catch {
+            // Recent history should never turn a successful desktop change into a user-visible failure.
+        }
+    }
+
+    private func libraryMarket(for wallpaper: BingImage, fallback: BingMarket?) -> BingMarket {
+        if let favorite = libraryDocument.favorites.first(where: { $0.id == wallpaper.id }) {
+            return favorite.snapshot.market
+        }
+
+        if let recent = libraryDocument.recentSet.first(where: { $0.id == wallpaper.id }) {
+            return recent.snapshot.market
+        }
+
+        if let fallback {
+            return fallback
+        }
+
+        return activeMarket ?? .china
     }
 
     private func moveSelection(by step: Int, filter: WallpaperListFilter) {

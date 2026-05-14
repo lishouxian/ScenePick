@@ -37,6 +37,7 @@
 "sidebar.filter.label" = "壁纸列表";
 "sidebar.filter.all" = "全部";
 "sidebar.filter.favorites" = "收藏";
+"sidebar.filter.recent" = "最近";
 "dailyUpdate.title" = "每日自动换壁纸";
 "dailyUpdate.help" = "拾景在菜单栏运行时，每天自动换成最新壁纸。";
 
@@ -45,6 +46,8 @@
 "empty.subtitle" = "重新加载壁纸，浏览最新精选。";
 "empty.favorites.title" = "还没有收藏";
 "empty.favorites.subtitle" = "使用星标按钮，把喜欢的壁纸保存在这里。";
+"empty.recent.title" = "还没有设置过壁纸";
+"empty.recent.subtitle" = "设为桌面后，会在这里看到最近项目。";
 "onboarding.menuBar.title" = "菜单栏入口";
 "onboarding.menuBar.description" = "随时通过菜单栏图标重新打开拾景。";
 "onboarding.setDesktop.title" = "一键设为桌面";
