@@ -40,6 +40,14 @@
 "sidebar.filter.recent" = "最近";
 "dailyUpdate.title" = "每日自动换壁纸";
 "dailyUpdate.help" = "拾景在菜单栏运行时，每天自动换成最新壁纸。";
+"launchAtLogin.title" = "开机启动";
+"launchAtLogin.help" = "建议与每日自动换壁纸配合使用。";
+"launchAtLogin.status.enabled" = "已开启。登录后会自动打开拾景。";
+"launchAtLogin.status.disabled" = "已关闭。";
+"launchAtLogin.status.requiresApproval" = "需要在系统设置中批准。";
+"launchAtLogin.status.unavailable" = "当前应用构建不可用。";
+"launchAtLogin.status.updating" = "正在更新登录项...";
+"launchAtLogin.error" = "无法更新登录项：%@";
 
 "loading.bingArchive" = "正在加载 Bing 壁纸";
 "empty.title" = "开始使用 Bing 每日壁纸";

@@ -1,5 +1,6 @@
 import AppKit
 import BingWallpapersCore
+import ScenePickSupport
 import SwiftUI
 
 struct ContentView: View {
@@ -10,6 +11,7 @@ struct ContentView: View {
     @Binding var dailyAutoUpdateEnabled: Bool
     @Binding var selectedLanguageRaw: String
     @State private var listFilter = WallpaperListFilter.all
+    @StateObject private var launchAtLogin = LaunchAtLoginController()
 
     private var selectedMarket: BingMarket {
         BingMarket(rawValue: selectedMarketRaw) ?? .china
@@ -48,6 +50,10 @@ struct ContentView: View {
 
                     Toggle(L10n.string("dailyUpdate.title"), isOn: $dailyAutoUpdateEnabled)
                     Text(L10n.string("dailyUpdate.help"))
+
+                    Divider()
+
+                    LaunchAtLoginMenuSection(controller: launchAtLogin)
 
                     Divider()
 
@@ -135,6 +141,41 @@ enum WallpaperListFilter: String, CaseIterable, Identifiable {
             return L10n.string("sidebar.filter.favorites")
         case .recent:
             return L10n.string("sidebar.filter.recent")
+        }
+    }
+}
+
+private struct LaunchAtLoginMenuSection: View {
+    @ObservedObject var controller: LaunchAtLoginController
+
+    var body: some View {
+        Group {
+            Toggle(isOn: isEnabled) {
+                Label(L10n.string("launchAtLogin.title"), systemImage: "power.circle")
+            }
+            .disabled(controller.isUpdating || controller.status == .unavailable)
+
+            Text(L10n.string("launchAtLogin.help"))
+            Text(controller.status.localizedMessage)
+
+            if controller.isUpdating {
+                Text(L10n.string("launchAtLogin.status.updating"))
+            }
+
+            if let errorMessage = controller.errorMessage {
+                Text(L10n.format("launchAtLogin.error", errorMessage))
+            }
+        }
+        .onAppear {
+            controller.refresh()
+        }
+    }
+
+    private var isEnabled: Binding<Bool> {
+        Binding {
+            controller.isEnabled
+        } set: { isEnabled in
+            controller.setEnabled(isEnabled)
         }
     }
 }
