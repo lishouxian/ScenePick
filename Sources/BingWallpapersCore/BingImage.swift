@@ -13,6 +13,24 @@ public struct BingImage: Decodable, Equatable, Hashable, Identifiable, Sendable 
     public let title: String
     public let hash: String?
 
+    public init(
+        startDate: String,
+        url: String,
+        urlBase: String,
+        copyright: String,
+        copyrightLink: String?,
+        title: String,
+        hash: String?
+    ) {
+        self.startDate = startDate
+        self.url = url
+        self.urlBase = urlBase
+        self.copyright = copyright
+        self.copyrightLink = copyrightLink
+        self.title = title
+        self.hash = hash
+    }
+
     public var id: String {
         [startDate, imageIdentitySource].joined(separator: "-")
     }

@@ -26,6 +26,14 @@ struct BingWallpapersCoreSelfTest {
         try setDesktopImageThrowsSummaryWhenAllScreensFail()
         try setDesktopImageKeepsNoScreensErrorDistinct()
         try desktopPartialFailureErrorIsLocalized()
+        try wallpaperLibraryStartsEmptyWhenFileMissing()
+        try wallpaperLibraryPersistsFavoriteSnapshot()
+        try wallpaperLibraryFavoriteMutationsStayUnique()
+        try wallpaperLibraryRejectsUnknownVersionWithoutOverwriting()
+        try wallpaperLibraryRejectsMutationAfterUnknownVersion()
+        try wallpaperLibraryQuarantinesDamagedJSON()
+        try wallpaperLibraryPinnedCacheFileNamesIncludeAllResolutions()
+        try wallpaperSnapshotRestoresBingImageMetadata()
         try writesCacheFileIntoConfiguredDirectory()
         try detectsCachedFiles()
         try await acceptsJPEGImageResponse()
@@ -39,7 +47,7 @@ struct BingWallpapersCoreSelfTest {
         try dailyUpdateSkipsWhenAlreadyRunToday()
         try dailyUpdateCheckDelayIncludesClampedRandomOffset()
 
-        print("BingWallpapersCoreSelfTest: 33 tests passed")
+        print("BingWallpapersCoreSelfTest: 41 tests passed")
     }
 
     private static func decodesBingArchiveAndBuildsHighResolutionURLs() throws {
@@ -393,6 +401,168 @@ struct BingWallpapersCoreSelfTest {
         )
     }
 
+    @MainActor
+    private static func wallpaperLibraryStartsEmptyWhenFileMissing() throws {
+        let fileURL = temporaryLibraryFileURL()
+        let store = JSONWallpaperLibraryStore(fileURL: fileURL)
+
+        store.load()
+
+        try expect(store.document == .empty, "missing wallpaper library should load an empty document")
+        try expect(store.loadIssue == nil, "missing wallpaper library should not report a load issue")
+    }
+
+    @MainActor
+    private static func wallpaperLibraryPersistsFavoriteSnapshot() throws {
+        let fileURL = temporaryLibraryFileURL()
+        let image = try cacheFixtureImage()
+        let store = JSONWallpaperLibraryStore(fileURL: fileURL, now: fixedLibraryDate)
+
+        try store.setFavorite(image, market: .china, isFavorite: true)
+
+        let reloadedStore = JSONWallpaperLibraryStore(fileURL: fileURL)
+        reloadedStore.load()
+
+        let favorite = try require(reloadedStore.document.favorites.first, "persisted favorite")
+        try expect(favorite.id == image.id, "favorite ID should persist")
+        try expect(favorite.snapshot.market == .china, "favorite market should persist")
+        try expect(favorite.snapshot.title == image.title, "favorite title snapshot should persist")
+        try expect(favorite.favoritedAt == fixedLibraryDate(), "favorite timestamp should persist")
+    }
+
+    @MainActor
+    private static func wallpaperLibraryFavoriteMutationsStayUnique() throws {
+        let fileURL = temporaryLibraryFileURL()
+        let image = try cacheFixtureImage()
+        let store = JSONWallpaperLibraryStore(fileURL: fileURL)
+
+        try store.setFavorite(image, market: .china, isFavorite: true)
+        try store.setFavorite(image, market: .china, isFavorite: true)
+        try expect(store.document.favorites.count == 1, "setting the same favorite twice should not duplicate it")
+
+        try store.toggleFavorite(image, market: .china)
+        try expect(!store.isFavorite(id: image.id), "toggle should remove an existing favorite")
+
+        try store.setFavorite(image, market: .china, isFavorite: true)
+        try expect(store.isFavorite(id: image.id), "last favorite mutation should win")
+    }
+
+    @MainActor
+    private static func wallpaperLibraryRejectsUnknownVersionWithoutOverwriting() throws {
+        let fileURL = temporaryLibraryFileURL()
+        try FileManager.default.createDirectory(
+            at: fileURL.deletingLastPathComponent(),
+            withIntermediateDirectories: true
+        )
+        let originalData = Data("""
+        {
+          "version": 99,
+          "favorites": [],
+          "recentSet": []
+        }
+        """.utf8)
+        try originalData.write(to: fileURL)
+
+        let store = JSONWallpaperLibraryStore(fileURL: fileURL)
+        store.load()
+
+        try expect(store.document == .empty, "unknown library version should fall back to an empty document")
+        try expect(store.loadIssue == .unsupportedVersion(99), "unknown library version should be reported")
+        let reloadedData = try Data(contentsOf: fileURL)
+        try expect(reloadedData == originalData, "unknown version file should not be overwritten")
+    }
+
+    @MainActor
+    private static func wallpaperLibraryRejectsMutationAfterUnknownVersion() throws {
+        let fileURL = temporaryLibraryFileURL()
+        try FileManager.default.createDirectory(
+            at: fileURL.deletingLastPathComponent(),
+            withIntermediateDirectories: true
+        )
+        let originalData = Data("""
+        {
+          "version": 99,
+          "favorites": [
+            {
+              "snapshot": {
+                "id": "future-id",
+                "startDate": "20260514",
+                "market": "zh-CN",
+                "title": "Future",
+                "copyright": "Future copyright",
+                "copyrightLink": null,
+                "url": "/th?id=OHR.Future_1366x768.jpg",
+                "urlBase": "/th?id=OHR.Future",
+                "hash": "future-hash"
+              },
+              "favoritedAt": "2026-05-14T00:00:00Z"
+            }
+          ],
+          "recentSet": []
+        }
+        """.utf8)
+        try originalData.write(to: fileURL)
+
+        let store = JSONWallpaperLibraryStore(fileURL: fileURL)
+        store.load()
+
+        do {
+            try store.setFavorite(try cacheFixtureImage(), market: .china, isFavorite: true)
+            throw TestFailure("unknown version library should reject favorite mutations")
+        } catch WallpaperLibraryMutationError.unsupportedVersion(99) {
+        }
+
+        let reloadedData = try Data(contentsOf: fileURL)
+        try expect(reloadedData == originalData, "unknown version mutation should not overwrite original bytes")
+    }
+
+    @MainActor
+    private static func wallpaperLibraryQuarantinesDamagedJSON() throws {
+        let fileURL = temporaryLibraryFileURL()
+        try FileManager.default.createDirectory(
+            at: fileURL.deletingLastPathComponent(),
+            withIntermediateDirectories: true
+        )
+        let damagedData = Data("{".utf8)
+        try damagedData.write(to: fileURL)
+
+        let store = JSONWallpaperLibraryStore(fileURL: fileURL, now: fixedLibraryDate)
+        store.load()
+
+        try expect(store.document == .empty, "damaged library should fall back to an empty document")
+        guard case .damagedJSONBackupCreated(let backupURL) = store.loadIssue else {
+            throw TestFailure("damaged library should report a backup URL")
+        }
+        try expect(!FileManager.default.fileExists(atPath: fileURL.path), "damaged library should be moved away from the active path")
+        let backupData = try Data(contentsOf: backupURL)
+        try expect(backupData == damagedData, "damaged library backup should preserve original bytes")
+    }
+
+    @MainActor
+    private static func wallpaperLibraryPinnedCacheFileNamesIncludeAllResolutions() throws {
+        let fileURL = temporaryLibraryFileURL()
+        let image = try cacheFixtureImage()
+        let store = JSONWallpaperLibraryStore(fileURL: fileURL)
+
+        try store.setFavorite(image, market: .china, isFavorite: true)
+
+        try expect(
+            store.pinnedCacheFileNames(resolutions: WallpaperResolution.allCases) == Set(WallpaperResolution.allCases.map { image.fileName(resolution: $0) }),
+            "pinned file names should cover every requested resolution"
+        )
+    }
+
+    @MainActor
+    private static func wallpaperSnapshotRestoresBingImageMetadata() throws {
+        let image = try cacheFixtureImage()
+        let snapshot = WallpaperSnapshot(image: image, market: .australia)
+        let restoredImage = snapshot.image
+
+        try expect(snapshot.id == image.id, "snapshot should retain image identity")
+        try expect(restoredImage == image, "snapshot should restore a BingImage for cache and preview reuse")
+        try expect(snapshot.market == .australia, "snapshot should retain market context")
+    }
+
     private static func writesCacheFileIntoConfiguredDirectory() throws {
         let directory = FileManager.default.temporaryDirectory
             .appendingPathComponent(UUID().uuidString, isDirectory: true)
@@ -612,6 +782,16 @@ struct BingWallpapersCoreSelfTest {
         let fileURL = directory.appendingPathComponent("wallpaper.jpg")
         try Data(repeating: 1, count: 8).write(to: fileURL)
         return fileURL
+    }
+
+    private static func temporaryLibraryFileURL() -> URL {
+        FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+            .appendingPathComponent("wallpapers.json", isDirectory: false)
+    }
+
+    private static func fixedLibraryDate() -> Date {
+        Date(timeIntervalSince1970: 1_800_000_000)
     }
 
     private static func archiveData(prefix: String, count: Int) -> Data {
