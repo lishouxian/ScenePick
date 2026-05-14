@@ -8,7 +8,7 @@ cask "scene-pick" do
   desc "Browse Bing daily wallpapers and set the desktop background"
   homepage "https://github.com/lishouxian/ScenePick"
 
-  depends_on macos: ">= :ventura"
+  depends_on macos: :ventura
 
   app "ScenePick.app"
 
