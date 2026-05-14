@@ -5,3 +5,4 @@
 "error.invalidImageData" = "下载的壁纸数据不是有效图片。";
 "error.missingCachedFile" = "未找到壁纸文件：%@。";
 "error.noScreensAvailable" = "没有可用于切换壁纸的 macOS 屏幕。";
+"error.someScreensFailed" = "已为 %d/%d 个屏幕设置壁纸，其余屏幕设置失败。";

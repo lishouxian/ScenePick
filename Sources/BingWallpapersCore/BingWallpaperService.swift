@@ -108,6 +108,7 @@ public enum BingWallpaperError: LocalizedError, Equatable, Sendable {
     case invalidImageData
     case missingCachedFile(URL)
     case noScreensAvailable
+    case someScreensFailed(succeeded: Int, total: Int)
 
     public var errorDescription: String? {
         switch self {
@@ -125,6 +126,8 @@ public enum BingWallpaperError: LocalizedError, Equatable, Sendable {
             return CoreL10n.format("error.missingCachedFile", url.path)
         case .noScreensAvailable:
             return CoreL10n.string("error.noScreensAvailable")
+        case .someScreensFailed(let succeeded, let total):
+            return CoreL10n.format("error.someScreensFailed", succeeded, total)
         }
     }
 }

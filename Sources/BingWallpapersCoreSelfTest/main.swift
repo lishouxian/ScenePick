@@ -1,4 +1,5 @@
 import BingWallpapersCore
+import AppKit
 import Foundation
 
 @main
@@ -20,6 +21,11 @@ struct BingWallpapersCoreSelfTest {
         try await fetchAvailableArchiveSkipsOlderRequestWhenLatestPageIsPartial()
         try await fetchAvailableArchivePropagatesLatestHTTPFailure()
         try await fetchAvailableArchivePropagatesLatestDecodeFailure()
+        try setDesktopImageSucceedsAcrossAllScreens()
+        try setDesktopImageAttemptsRemainingScreensAfterPartialFailure()
+        try setDesktopImageThrowsSummaryWhenAllScreensFail()
+        try setDesktopImageKeepsNoScreensErrorDistinct()
+        try desktopPartialFailureErrorIsLocalized()
         try writesCacheFileIntoConfiguredDirectory()
         try detectsCachedFiles()
         try await acceptsJPEGImageResponse()
@@ -33,7 +39,7 @@ struct BingWallpapersCoreSelfTest {
         try dailyUpdateSkipsWhenAlreadyRunToday()
         try dailyUpdateCheckDelayIncludesClampedRandomOffset()
 
-        print("BingWallpapersCoreSelfTest: 28 tests passed")
+        print("BingWallpapersCoreSelfTest: 33 tests passed")
     }
 
     private static func decodesBingArchiveAndBuildsHighResolutionURLs() throws {
@@ -292,6 +298,101 @@ struct BingWallpapersCoreSelfTest {
         }
     }
 
+    private static func setDesktopImageSucceedsAcrossAllScreens() throws {
+        let fileURL = try temporaryWallpaperFile()
+        defer { try? FileManager.default.removeItem(at: fileURL.deletingLastPathComponent()) }
+        let perScreenSetter = RecordingPerScreenWallpaperSetter()
+        let setter = MacDesktopWallpaperSetter(
+            screenEnumerator: FixedScreenEnumerator(tokens: ["display-1", "display-2"]),
+            perScreenSetter: perScreenSetter
+        )
+
+        try setter.setDesktopImage(fileURL: fileURL, fillMode: .fitScreen)
+
+        try expect(perScreenSetter.attemptedTokens == ["display-1", "display-2"], "desktop setter should attempt every screen")
+    }
+
+    private static func setDesktopImageAttemptsRemainingScreensAfterPartialFailure() throws {
+        let fileURL = try temporaryWallpaperFile()
+        defer { try? FileManager.default.removeItem(at: fileURL.deletingLastPathComponent()) }
+        let perScreenSetter = RecordingPerScreenWallpaperSetter(failingTokens: ["display-2"])
+        let setter = MacDesktopWallpaperSetter(
+            screenEnumerator: FixedScreenEnumerator(tokens: ["display-1", "display-2", "display-3"]),
+            perScreenSetter: perScreenSetter
+        )
+
+        do {
+            try setter.setDesktopImage(fileURL: fileURL)
+            throw TestFailure("desktop setter should throw when one screen fails")
+        } catch BingWallpaperError.someScreensFailed(let succeeded, let total) {
+            try expect(succeeded == 2, "partial desktop failure should report succeeded screens")
+            try expect(total == 3, "partial desktop failure should report total screens")
+        }
+        try expect(
+            perScreenSetter.attemptedTokens == ["display-1", "display-2", "display-3"],
+            "desktop setter should continue after a per-screen failure"
+        )
+    }
+
+    private static func setDesktopImageThrowsSummaryWhenAllScreensFail() throws {
+        let fileURL = try temporaryWallpaperFile()
+        defer { try? FileManager.default.removeItem(at: fileURL.deletingLastPathComponent()) }
+        let perScreenSetter = RecordingPerScreenWallpaperSetter(failingTokens: ["display-1", "display-2"])
+        let setter = MacDesktopWallpaperSetter(
+            screenEnumerator: FixedScreenEnumerator(tokens: ["display-1", "display-2"]),
+            perScreenSetter: perScreenSetter
+        )
+
+        do {
+            try setter.setDesktopImage(fileURL: fileURL)
+            throw TestFailure("desktop setter should throw when every screen fails")
+        } catch BingWallpaperError.someScreensFailed(let succeeded, let total) {
+            try expect(succeeded == 0, "all-screen desktop failure should report zero successes")
+            try expect(total == 2, "all-screen desktop failure should report total screens")
+        }
+        try expect(perScreenSetter.attemptedTokens == ["display-1", "display-2"], "desktop setter should attempt every failing screen")
+    }
+
+    private static func setDesktopImageKeepsNoScreensErrorDistinct() throws {
+        let fileURL = try temporaryWallpaperFile()
+        defer { try? FileManager.default.removeItem(at: fileURL.deletingLastPathComponent()) }
+        let setter = MacDesktopWallpaperSetter(
+            screenEnumerator: FixedScreenEnumerator(tokens: []),
+            perScreenSetter: RecordingPerScreenWallpaperSetter()
+        )
+
+        do {
+            try setter.setDesktopImage(fileURL: fileURL)
+            throw TestFailure("desktop setter should throw when no screens are available")
+        } catch BingWallpaperError.noScreensAvailable {
+        }
+    }
+
+    private static func desktopPartialFailureErrorIsLocalized() throws {
+        let store = BingWallpaperDefaults.store
+        let key = BingWallpaperDefaultKeys.selectedLanguage
+        let originalLanguage = store.string(forKey: key)
+        defer {
+            if let originalLanguage {
+                store.set(originalLanguage, forKey: key)
+            } else {
+                store.removeObject(forKey: key)
+            }
+        }
+
+        store.set("en", forKey: key)
+        try expect(
+            BingWallpaperError.someScreensFailed(succeeded: 1, total: 2).errorDescription == "Set wallpaper on 1 of 2 screens; the remaining screens failed.",
+            "English partial screen failure error"
+        )
+
+        store.set("zh-Hans", forKey: key)
+        try expect(
+            BingWallpaperError.someScreensFailed(succeeded: 1, total: 2).errorDescription == "已为 1/2 个屏幕设置壁纸，其余屏幕设置失败。",
+            "Chinese partial screen failure error"
+        )
+    }
+
     private static func writesCacheFileIntoConfiguredDirectory() throws {
         let directory = FileManager.default.temporaryDirectory
             .appendingPathComponent(UUID().uuidString, isDirectory: true)
@@ -504,6 +605,15 @@ struct BingWallpapersCoreSelfTest {
         return data
     }
 
+    private static func temporaryWallpaperFile() throws -> URL {
+        let directory = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        let fileURL = directory.appendingPathComponent("wallpaper.jpg")
+        try Data(repeating: 1, count: 8).write(to: fileURL)
+        return fileURL
+    }
+
     private static func archiveData(prefix: String, count: Int) -> Data {
         let images = (0..<count).map { index in
             """
@@ -564,6 +674,42 @@ struct BingWallpapersCoreSelfTest {
 
         init(_ description: String) {
             self.description = description
+        }
+    }
+
+    private struct FixedScreen: DesktopScreenTarget {
+        let identityToken: AnyHashable
+    }
+
+    private struct FixedScreenEnumerator: DesktopScreenEnumerating {
+        let screens: [any DesktopScreenTarget]
+
+        init(tokens: [AnyHashable]) {
+            screens = tokens.map { FixedScreen(identityToken: $0) }
+        }
+
+        func availableScreens() -> [any DesktopScreenTarget] {
+            screens
+        }
+    }
+
+    private final class RecordingPerScreenWallpaperSetter: PerScreenWallpaperSetting {
+        private let failingTokens: Set<AnyHashable>
+        private(set) var attemptedTokens: [AnyHashable] = []
+
+        init(failingTokens: Set<AnyHashable> = []) {
+            self.failingTokens = failingTokens
+        }
+
+        func setDesktopImage(
+            fileURL: URL,
+            on screen: any DesktopScreenTarget,
+            options: [NSWorkspace.DesktopImageOptionKey: Any]
+        ) throws {
+            attemptedTokens.append(screen.identityToken)
+            if failingTokens.contains(screen.identityToken) {
+                throw TestFailure("screen failed: \(screen.identityToken)")
+            }
         }
     }
 
