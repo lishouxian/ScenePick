@@ -5,3 +5,4 @@
 "error.invalidImageData" = "Downloaded wallpaper data was not a valid image.";
 "error.missingCachedFile" = "The wallpaper file was not found at %@.";
 "error.noScreensAvailable" = "No macOS screens were available for wallpaper switching.";
+"error.someScreensFailed" = "Set wallpaper on %d of %d screens; the remaining screens failed.";
