@@ -1,6 +1,6 @@
 cask "scene-pick" do
-  version "1.0.5"
-  sha256 "230eae6e0aef26f9831fcb3d54f14d1b17fb9fbc9093317f6264be15a97efca3"
+  version "1.0.6"
+  sha256 "35496760862e3925b4266789f50cffdf4671426609c56a03748ab528471103fe"
 
   url "https://github.com/lishouxian/ScenePick/releases/download/v#{version}/ScenePick.dmg"
   name "ScenePick"
