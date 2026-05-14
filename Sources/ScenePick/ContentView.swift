@@ -44,6 +44,7 @@ struct ContentView: View {
                     }
 
                     Toggle(L10n.string("dailyUpdate.title"), isOn: $dailyAutoUpdateEnabled)
+                    Text(L10n.string("dailyUpdate.help"))
 
                     Divider()
 
@@ -233,17 +234,65 @@ private struct WallpaperDetailView: View {
 
 private struct EmptyWallpapersView: View {
     var body: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: 18) {
             Image(systemName: "photo.on.rectangle")
                 .font(.system(size: 42, weight: .regular))
                 .foregroundColor(.secondary)
 
-            Text(L10n.string("empty.title"))
-                .font(.title3.weight(.semibold))
+            VStack(spacing: 6) {
+                Text(L10n.string("empty.title"))
+                    .font(.title3.weight(.semibold))
 
-            Text(L10n.string("empty.subtitle"))
-                .font(.callout)
-                .foregroundColor(.secondary)
+                Text(L10n.string("empty.subtitle"))
+                    .font(.callout)
+                    .foregroundColor(.secondary)
+            }
+
+            VStack(alignment: .leading, spacing: 10) {
+                OnboardingTip(
+                    systemImage: "menubar.rectangle",
+                    titleKey: "onboarding.menuBar.title",
+                    descriptionKey: "onboarding.menuBar.description"
+                )
+                OnboardingTip(
+                    systemImage: "desktopcomputer",
+                    titleKey: "onboarding.setDesktop.title",
+                    descriptionKey: "onboarding.setDesktop.description"
+                )
+                OnboardingTip(
+                    systemImage: "calendar.badge.clock",
+                    titleKey: "onboarding.dailyUpdate.title",
+                    descriptionKey: "onboarding.dailyUpdate.description"
+                )
+            }
+            .padding(.top, 4)
+        }
+        .frame(maxWidth: 420)
+        .padding(24)
+    }
+}
+
+private struct OnboardingTip: View {
+    let systemImage: String
+    let titleKey: String
+    let descriptionKey: String
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 10) {
+            Image(systemName: systemImage)
+                .font(.system(size: 15, weight: .medium))
+                .foregroundStyle(.secondary)
+                .frame(width: 18)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(L10n.string(titleKey))
+                    .font(.callout.weight(.medium))
+
+                Text(L10n.string(descriptionKey))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
         }
     }
 }

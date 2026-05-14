@@ -5,7 +5,13 @@ import Foundation
 @MainActor
 final class WallpaperStore: ObservableObject {
     @Published private(set) var wallpapers: [BingImage] = []
-    @Published var selectedWallpaperID: BingImage.ID?
+    @Published var selectedWallpaperID: BingImage.ID? {
+        didSet {
+            if oldValue != selectedWallpaperID {
+                cancelStatusReset()
+            }
+        }
+    }
     @Published private(set) var isLoading = false
     @Published private(set) var isSettingDesktop = false
     @Published var errorMessage: String?
@@ -18,7 +24,9 @@ final class WallpaperStore: ObservableObject {
     private var activeLoadID: UUID?
     private var archiveCache: [BingMarket: CachedArchive] = [:]
     private var previewPrefetchTask: Task<Void, Never>?
+    private var statusResetTask: Task<Void, Never>?
     private let archiveCacheTTL: TimeInterval = 300
+    private static let statusResetDelayNanoseconds: UInt64 = 3_000_000_000
 
     init(
         service: BingWallpaperService = BingWallpaperService(),
@@ -42,6 +50,7 @@ final class WallpaperStore: ObservableObject {
         let loadID = UUID()
         let isMarketChange = activeMarket != nil && activeMarket != market
 
+        cancelStatusReset()
         activeLoadID = loadID
         previewPrefetchTask?.cancel()
         isLoading = true
@@ -87,6 +96,7 @@ final class WallpaperStore: ObservableObject {
 
     deinit {
         previewPrefetchTask?.cancel()
+        statusResetTask?.cancel()
     }
 
     private func applyWallpapers(
@@ -129,6 +139,7 @@ final class WallpaperStore: ObservableObject {
         fillMode: WallpaperFillMode
     ) async {
         guard let selectedWallpaper else {
+            cancelStatusReset()
             errorMessage = L10n.string("error.selectWallpaperFirst")
             return
         }
@@ -150,6 +161,7 @@ final class WallpaperStore: ObservableObject {
         }
 
         guard let latest = wallpapers.first else {
+            cancelStatusReset()
             errorMessage = L10n.string("error.noLatestWallpaper")
             return
         }
@@ -169,6 +181,7 @@ final class WallpaperStore: ObservableObject {
         }
 
         guard let wallpaper = wallpaperAfterMovingSelection(by: step) else {
+            cancelStatusReset()
             errorMessage = L10n.string("error.selectWallpaperFirst")
             return
         }
@@ -178,6 +191,7 @@ final class WallpaperStore: ObservableObject {
     }
 
     func clearCache() {
+        cancelStatusReset()
         do {
             try cache.removeAll()
             errorMessage = nil
@@ -188,6 +202,7 @@ final class WallpaperStore: ObservableObject {
     }
 
     func clearMessages() {
+        cancelStatusReset()
         errorMessage = nil
         statusMessage = nil
     }
@@ -216,6 +231,7 @@ final class WallpaperStore: ObservableObject {
             )
 
             statusMessage = L10n.format("status.setDesktop", wallpaper.localizedDisplayTitle)
+            scheduleStatusReset()
         } catch {
             errorMessage = error.localizedDescription
         }
@@ -247,6 +263,38 @@ final class WallpaperStore: ObservableObject {
             } ?? 0
         let nextIndex = (currentIndex + step + wallpapers.count) % wallpapers.count
         return wallpapers[nextIndex]
+    }
+
+    private func scheduleStatusReset() {
+        cancelStatusReset()
+        statusResetTask = Task { [weak self] in
+            do {
+                try await Task.sleep(nanoseconds: Self.statusResetDelayNanoseconds)
+            } catch {
+                return
+            }
+
+            guard !Task.isCancelled else {
+                return
+            }
+
+            self?.clearStatusAfterResetDelay()
+        }
+    }
+
+    private func cancelStatusReset() {
+        statusResetTask?.cancel()
+        statusResetTask = nil
+    }
+
+    private func clearStatusAfterResetDelay() {
+        statusResetTask = nil
+
+        guard !isLoading, !isSettingDesktop else {
+            return
+        }
+
+        statusMessage = nil
     }
 
     private func prefetchPreviewImages(_ images: [BingImage]) {
