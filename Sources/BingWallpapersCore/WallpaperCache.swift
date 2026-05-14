@@ -87,9 +87,44 @@ public final class WallpaperCache: @unchecked Sendable {
             throw BingWallpaperError.httpStatus(httpResponse.statusCode)
         }
 
+        guard hasImageContentType(httpResponse) else {
+            throw BingWallpaperError.invalidImageData
+        }
+
         guard data.count > 4_096 else {
             throw BingWallpaperError.invalidImageData
         }
+
+        guard hasSupportedImageSignature(data) else {
+            throw BingWallpaperError.invalidImageData
+        }
+    }
+
+    private func hasImageContentType(_ response: HTTPURLResponse) -> Bool {
+        guard let contentType = response.value(forHTTPHeaderField: "Content-Type") else {
+            return true
+        }
+
+        return contentType
+            .lowercased()
+            .split(separator: ";", maxSplits: 1)
+            .first?
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .hasPrefix("image/") == true
+    }
+
+    private func hasSupportedImageSignature(_ data: Data) -> Bool {
+        hasJPEGSignature(data) || hasPNGSignature(data)
+    }
+
+    private func hasJPEGSignature(_ data: Data) -> Bool {
+        let signature: [UInt8] = [0xFF, 0xD8, 0xFF]
+        return data.starts(with: signature)
+    }
+
+    private func hasPNGSignature(_ data: Data) -> Bool {
+        let signature: [UInt8] = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]
+        return data.starts(with: signature)
     }
 
 }
