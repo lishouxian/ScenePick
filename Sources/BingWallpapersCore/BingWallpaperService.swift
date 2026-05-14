@@ -3,13 +3,20 @@ import Foundation
 public final class BingWallpaperService: @unchecked Sendable {
     public static let archivePageSize = 8
     public static let maximumArchiveOffset = 7
+    public static let defaultRequestTimeout: TimeInterval = 12
 
     private let session: URLSession
     private let decoder: JSONDecoder
 
-    public init(session: URLSession = .shared, decoder: JSONDecoder = JSONDecoder()) {
+    public init(session: URLSession = BingWallpaperService.defaultSession(), decoder: JSONDecoder = JSONDecoder()) {
         self.session = session
         self.decoder = decoder
+    }
+
+    public static func defaultSession() -> URLSession {
+        let configuration = URLSessionConfiguration.default
+        configuration.timeoutIntervalForRequest = defaultRequestTimeout
+        return URLSession(configuration: configuration)
     }
 
     public func fetchArchive(
@@ -45,7 +52,11 @@ public final class BingWallpaperService: @unchecked Sendable {
                 offset: Self.maximumArchiveOffset
             )
             return Self.deduplicated(latestImages + olderImages)
-        } catch BingWallpaperError.emptyArchive {
+        } catch {
+            if Task.isCancelled {
+                throw error
+            }
+
             return latestImages
         }
     }
