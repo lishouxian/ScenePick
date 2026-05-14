@@ -3,7 +3,7 @@ import Foundation
 
 @main
 struct BingWallpapersCoreSelfTest {
-    static func main() throws {
+    static func main() async throws {
         try decodesBingArchiveAndBuildsHighResolutionURLs()
         try usesCopyrightDescriptionWhenBingReturnsPlaceholderTitle()
         try fileNameIsStableAndSafeForCache()
@@ -12,11 +12,18 @@ struct BingWallpapersCoreSelfTest {
         try archiveURLClampsOffsetToBingLimit()
         try writesCacheFileIntoConfiguredDirectory()
         try detectsCachedFiles()
+        try await acceptsJPEGImageResponse()
+        try await acceptsPNGImageResponse()
+        try await acceptsImageResponseWithoutContentType()
+        try await rejectsHTMLImageResponse()
+        try await rejectsHTMLDataWithImageContentType()
+        try await rejectsSmallImageData()
+        try await rejectsTruncatedImageSignature()
         try dailyUpdateRunsAfterScheduledTimeWhenNotRunToday()
         try dailyUpdateSkipsWhenAlreadyRunToday()
         try dailyUpdateCheckDelayIncludesClampedRandomOffset()
 
-        print("BingWallpapersCoreSelfTest: 11 tests passed")
+        print("BingWallpapersCoreSelfTest: 18 tests passed")
     }
 
     private static func decodesBingArchiveAndBuildsHighResolutionURLs() throws {
@@ -154,6 +161,92 @@ struct BingWallpapersCoreSelfTest {
         try cache.removeAll()
     }
 
+    private static func acceptsJPEGImageResponse() async throws {
+        let directory = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        let cache = WallpaperCache(directory: directory)
+        let image = try cacheFixtureImage()
+        let url = try await cache.cachedImageURL(
+            for: image,
+            resolution: .preview,
+            session: URLSession.stubbed(
+                data: jpegImageData(),
+                contentType: "image/jpeg"
+            )
+        )
+
+        try expect(FileManager.default.fileExists(atPath: url.path), "JPEG image response should be cached")
+        try cache.removeAll()
+    }
+
+    private static func acceptsPNGImageResponse() async throws {
+        let directory = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        let cache = WallpaperCache(directory: directory)
+        let image = try cacheFixtureImage()
+        let url = try await cache.cachedImageURL(
+            for: image,
+            resolution: .preview,
+            session: URLSession.stubbed(
+                data: pngImageData(),
+                contentType: "image/png; charset=binary"
+            )
+        )
+
+        try expect(FileManager.default.fileExists(atPath: url.path), "PNG image response should be cached")
+        try cache.removeAll()
+    }
+
+    private static func acceptsImageResponseWithoutContentType() async throws {
+        let directory = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        let cache = WallpaperCache(directory: directory)
+        let image = try cacheFixtureImage()
+        let url = try await cache.cachedImageURL(
+            for: image,
+            resolution: .preview,
+            session: URLSession.stubbed(data: jpegImageData())
+        )
+
+        try expect(FileManager.default.fileExists(atPath: url.path), "image response without content type should be cached")
+        try cache.removeAll()
+    }
+
+    private static func rejectsHTMLImageResponse() async throws {
+        try await expectInvalidImageData(
+            data: htmlData(),
+            contentType: "text/html",
+            message: "HTML response should not be cached"
+        )
+    }
+
+    private static func rejectsHTMLDataWithImageContentType() async throws {
+        try await expectInvalidImageData(
+            data: htmlData(),
+            contentType: "image/jpeg",
+            message: "HTML data with image content type should not be cached"
+        )
+    }
+
+    private static func rejectsSmallImageData() async throws {
+        try await expectInvalidImageData(
+            data: Data([0xFF, 0xD8, 0xFF, 0xD9]),
+            contentType: "image/jpeg",
+            message: "small image data should not be cached"
+        )
+    }
+
+    private static func rejectsTruncatedImageSignature() async throws {
+        var data = Data([0xFF, 0xD8])
+        data.append(Data(repeating: 0, count: 4_200))
+
+        try await expectInvalidImageData(
+            data: data,
+            contentType: "image/jpeg",
+            message: "truncated image signature should not be cached"
+        )
+    }
+
     private static func dailyUpdateRunsAfterScheduledTimeWhenNotRunToday() throws {
         let schedule = DailyAutoUpdateSchedule(calendar: utcCalendar)
         let now = utcDate(year: 2026, month: 5, day: 7, hour: 0, minute: 5)
@@ -195,6 +288,55 @@ struct BingWallpapersCoreSelfTest {
         guard condition() else {
             throw TestFailure(message)
         }
+    }
+
+    private static func expectInvalidImageData(
+        data: Data,
+        contentType: String?,
+        message: String
+    ) async throws {
+        let directory = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        let cache = WallpaperCache(directory: directory)
+        let image = try cacheFixtureImage()
+        let destination = cache.cachedFileURL(for: image, resolution: .preview)
+
+        do {
+            _ = try await cache.cachedImageURL(
+                for: image,
+                resolution: .preview,
+                session: URLSession.stubbed(data: data, contentType: contentType)
+            )
+            throw TestFailure(message)
+        } catch BingWallpaperError.invalidImageData {
+            try expect(!FileManager.default.fileExists(atPath: destination.path), "\(message): invalid data should not be written")
+            try? cache.removeAll()
+        }
+    }
+
+    private static func cacheFixtureImage() throws -> BingImage {
+        try require(
+            try JSONDecoder().decode(BingArchiveResponse.self, from: cacheFixture).images.first,
+            "cache fixture image"
+        )
+    }
+
+    private static func jpegImageData() -> Data {
+        var data = Data([0xFF, 0xD8, 0xFF, 0xE0])
+        data.append(Data(repeating: 0, count: 4_200))
+        return data
+    }
+
+    private static func pngImageData() -> Data {
+        var data = Data([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A])
+        data.append(Data(repeating: 0, count: 4_200))
+        return data
+    }
+
+    private static func htmlData() -> Data {
+        var data = Data("<!doctype html><html><body>Sign in</body></html>".utf8)
+        data.append(Data(repeating: 0x20, count: 4_200))
+        return data
     }
 
     private static var utcCalendar: Calendar {
@@ -298,4 +440,44 @@ struct BingWallpapersCoreSelfTest {
       ]
     }
     """.utf8)
+}
+
+private final class URLProtocolStub: URLProtocol {
+    nonisolated(unsafe) static var data = Data()
+    nonisolated(unsafe) static var contentType: String?
+    nonisolated(unsafe) static var statusCode = 200
+
+    override class func canInit(with request: URLRequest) -> Bool {
+        true
+    }
+
+    override class func canonicalRequest(for request: URLRequest) -> URLRequest {
+        request
+    }
+
+    override func startLoading() {
+        let response = HTTPURLResponse(
+            url: request.url!,
+            statusCode: Self.statusCode,
+            httpVersion: nil,
+            headerFields: Self.contentType.map { ["Content-Type": $0] }
+        )!
+        client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
+        client?.urlProtocol(self, didLoad: Self.data)
+        client?.urlProtocolDidFinishLoading(self)
+    }
+
+    override func stopLoading() {}
+}
+
+private extension URLSession {
+    static func stubbed(data: Data, contentType: String? = nil) -> URLSession {
+        URLProtocolStub.data = data
+        URLProtocolStub.contentType = contentType
+        URLProtocolStub.statusCode = 200
+
+        let configuration = URLSessionConfiguration.ephemeral
+        configuration.protocolClasses = [URLProtocolStub.self]
+        return URLSession(configuration: configuration)
+    }
 }
