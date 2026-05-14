@@ -16,10 +16,12 @@ final class WallpaperStore: ObservableObject {
     @Published private(set) var isSettingDesktop = false
     @Published var errorMessage: String?
     @Published private(set) var statusMessage: String?
+    @Published private(set) var libraryDocument = WallpaperLibraryDocument.empty
 
     private let service: BingWallpaperService
     private let cache: WallpaperCache
     private let desktopSetter: DesktopWallpaperSetting
+    private let libraryStore: any WallpaperLibraryStoring
     private var activeMarket: BingMarket?
     private var activeLoadID: UUID?
     private var archiveCache: [BingMarket: CachedArchive] = [:]
@@ -31,19 +33,99 @@ final class WallpaperStore: ObservableObject {
     init(
         service: BingWallpaperService = BingWallpaperService(),
         cache: WallpaperCache = WallpaperCache(),
-        desktopSetter: DesktopWallpaperSetting = MacDesktopWallpaperSetter()
+        desktopSetter: DesktopWallpaperSetting = MacDesktopWallpaperSetter(),
+        libraryStore: any WallpaperLibraryStoring = JSONWallpaperLibraryStore()
     ) {
         self.service = service
         self.cache = cache
         self.desktopSetter = desktopSetter
+        self.libraryStore = libraryStore
     }
 
     var selectedWallpaper: BingImage? {
-        guard let selectedWallpaperID else {
-            return wallpapers.first
+        selectedWallpaper(filter: .all)
+    }
+
+    var favoriteWallpapers: [BingImage] {
+        libraryDocument.favorites.map { $0.snapshot.image }
+    }
+
+    func selectedWallpaper(filter: WallpaperListFilter) -> BingImage? {
+        let visibleWallpapers = wallpapers(for: filter)
+        return BingImageSelection.selectedImage(
+            in: visibleWallpapers,
+            selectedID: selectedWallpaperID
+        )
+    }
+
+    func wallpapers(for filter: WallpaperListFilter) -> [BingImage] {
+        switch filter {
+        case .all:
+            return wallpapers
+        case .favorites:
+            return favoriteWallpapers
+        }
+    }
+
+    func isFavorite(_ wallpaper: BingImage) -> Bool {
+        libraryDocument.favorites.contains { $0.id == wallpaper.id }
+    }
+
+    func loadLibrary() {
+        libraryStore.load()
+        libraryDocument = libraryStore.document
+        presentLibraryLoadIssueIfNeeded()
+    }
+
+    func presentLibraryLoadIssueIfNeeded() {
+        switch libraryStore.loadIssue {
+        case .unsupportedVersion:
+            errorMessage = L10n.string("error.favoriteLibraryUnsupportedVersion")
+        case .damagedJSONBackupCreated:
+            errorMessage = L10n.string("error.favoriteLibraryDamagedBackupCreated")
+        case .damagedJSONBackupFailed:
+            errorMessage = L10n.string("error.favoriteLibraryDamagedBackupFailed")
+        case nil:
+            break
+        }
+    }
+
+    func toggleFavorite(
+        _ wallpaper: BingImage,
+        market: BingMarket
+    ) {
+        cancelStatusReset()
+        do {
+            let shouldFavorite = !isFavorite(wallpaper)
+            try libraryStore.setFavorite(
+                wallpaper,
+                market: market,
+                isFavorite: shouldFavorite
+            )
+            libraryDocument = libraryStore.document
+            errorMessage = nil
+            statusMessage = shouldFavorite
+                ? L10n.string("status.favoriteAdded")
+                : L10n.string("status.favoriteRemoved")
+            scheduleStatusReset()
+        } catch WallpaperLibraryMutationError.unsupportedVersion {
+            errorMessage = L10n.string("error.favoriteLibraryUnsupportedVersion")
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    func ensureSelection(for filter: WallpaperListFilter) {
+        let visibleWallpapers = wallpapers(for: filter)
+        guard !visibleWallpapers.isEmpty else {
+            selectedWallpaperID = nil
+            return
         }
 
-        return wallpapers.first { $0.id == selectedWallpaperID }
+        selectedWallpaperID = BingImageSelection.selectedImage(
+            in: visibleWallpapers,
+            selectedID: selectedWallpaperID
+        )?.id
     }
 
     func load(market: BingMarket, forceRefresh: Bool = false) async {
@@ -126,19 +208,20 @@ final class WallpaperStore: ObservableObject {
         }
     }
 
-    func selectPrevious() {
-        moveSelection(by: -1)
+    func selectPrevious(filter: WallpaperListFilter = .all) {
+        moveSelection(by: -1, filter: filter)
     }
 
-    func selectNext() {
-        moveSelection(by: 1)
+    func selectNext(filter: WallpaperListFilter = .all) {
+        moveSelection(by: 1, filter: filter)
     }
 
     func setSelectedAsDesktop(
         resolution: WallpaperResolution,
-        fillMode: WallpaperFillMode
+        fillMode: WallpaperFillMode,
+        filter: WallpaperListFilter = .all
     ) async {
-        guard let selectedWallpaper else {
+        guard let selectedWallpaper = selectedWallpaper(filter: filter) else {
             cancelStatusReset()
             errorMessage = L10n.string("error.selectWallpaperFirst")
             return
@@ -237,19 +320,20 @@ final class WallpaperStore: ObservableObject {
         }
     }
 
-    private func moveSelection(by step: Int) {
-        guard !wallpapers.isEmpty else {
+    private func moveSelection(by step: Int, filter: WallpaperListFilter) {
+        let visibleWallpapers = wallpapers(for: filter)
+        guard !visibleWallpapers.isEmpty else {
             return
         }
 
         guard let selectedWallpaperID,
-              let index = wallpapers.firstIndex(where: { $0.id == selectedWallpaperID }) else {
-            self.selectedWallpaperID = wallpapers.first?.id
+              let index = visibleWallpapers.firstIndex(where: { $0.id == selectedWallpaperID }) else {
+            self.selectedWallpaperID = visibleWallpapers.first?.id
             return
         }
 
-        let nextIndex = (index + step + wallpapers.count) % wallpapers.count
-        self.selectedWallpaperID = wallpapers[nextIndex].id
+        let nextIndex = (index + step + visibleWallpapers.count) % visibleWallpapers.count
+        self.selectedWallpaperID = visibleWallpapers[nextIndex].id
     }
 
     private func wallpaperAfterMovingSelection(by step: Int) -> BingImage? {

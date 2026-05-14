@@ -9,6 +9,7 @@ struct ContentView: View {
     @Binding var fillModeRaw: String
     @Binding var dailyAutoUpdateEnabled: Bool
     @Binding var selectedLanguageRaw: String
+    @State private var listFilter = WallpaperListFilter.all
 
     private var selectedMarket: BingMarket {
         BingMarket(rawValue: selectedMarketRaw) ?? .china
@@ -24,11 +25,13 @@ struct ContentView: View {
 
     var body: some View {
         NavigationSplitView {
-            WallpaperSidebar(store: store)
+            WallpaperSidebar(store: store, filter: $listFilter)
             .navigationSplitViewColumnWidth(min: 280, ideal: 320, max: 380)
         } detail: {
             WallpaperDetailView(
                 store: store,
+                filter: listFilter,
+                market: selectedMarket,
                 resolution: selectedResolution,
                 fillMode: fillMode
             )
@@ -104,6 +107,9 @@ struct ContentView: View {
         .onChange(of: selectedLanguageRaw) { _ in
             store.clearMessages()
         }
+        .onChange(of: listFilter) { newValue in
+            store.ensureSelection(for: newValue)
+        }
     }
 
     private func revealCache() {
@@ -114,20 +120,57 @@ struct ContentView: View {
 
 }
 
+enum WallpaperListFilter: String, CaseIterable, Identifiable {
+    case all
+    case favorites
+
+    var id: String { rawValue }
+
+    var localizedLabel: String {
+        switch self {
+        case .all:
+            return L10n.string("sidebar.filter.all")
+        case .favorites:
+            return L10n.string("sidebar.filter.favorites")
+        }
+    }
+}
+
 private struct WallpaperSidebar: View {
     @ObservedObject var store: WallpaperStore
+    @Binding var filter: WallpaperListFilter
+
+    private var visibleWallpapers: [BingImage] {
+        store.wallpapers(for: filter)
+    }
 
     var body: some View {
-        List(selection: $store.selectedWallpaperID) {
-            ForEach(store.wallpapers) { wallpaper in
-                WallpaperRow(wallpaper: wallpaper)
-                    .tag(wallpaper.id)
+        VStack(spacing: 8) {
+            Picker(L10n.string("sidebar.filter.label"), selection: $filter) {
+                ForEach(WallpaperListFilter.allCases) { filter in
+                    Text(filter.localizedLabel).tag(filter)
+                }
             }
+            .pickerStyle(.segmented)
+            .labelsHidden()
+            .padding([.horizontal, .top], 10)
+
+            List(selection: $store.selectedWallpaperID) {
+                ForEach(visibleWallpapers) { wallpaper in
+                    WallpaperRow(
+                        wallpaper: wallpaper,
+                        isFavorite: store.isFavorite(wallpaper)
+                    )
+                    .tag(wallpaper.id)
+                }
+            }
+            .listStyle(.sidebar)
         }
-        .listStyle(.sidebar)
         .overlay {
-            if store.isLoading && store.wallpapers.isEmpty {
+            if store.isLoading && store.wallpapers.isEmpty && filter == .all {
                 ProgressView(loadingText)
+            } else if filter == .favorites && store.favoriteWallpapers.isEmpty {
+                EmptyFavoritesSidebarView()
             }
         }
     }
@@ -139,6 +182,7 @@ private struct WallpaperSidebar: View {
 
 private struct WallpaperRow: View {
     let wallpaper: BingImage
+    let isFavorite: Bool
 
     var body: some View {
         HStack(spacing: 12) {
@@ -160,13 +204,41 @@ private struct WallpaperRow: View {
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
             }
+
+            if isFavorite {
+                Image(systemName: "star.fill")
+                    .font(.caption)
+                    .foregroundStyle(.yellow)
+            }
         }
         .padding(.vertical, 4)
     }
 }
 
+private struct EmptyFavoritesSidebarView: View {
+    var body: some View {
+        VStack(spacing: 8) {
+            Image(systemName: "star")
+                .font(.system(size: 26, weight: .regular))
+                .foregroundStyle(.secondary)
+
+            Text(L10n.string("empty.favorites.title"))
+                .font(.callout.weight(.medium))
+
+            Text(L10n.string("empty.favorites.subtitle"))
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+        }
+        .frame(maxWidth: 220)
+        .padding()
+    }
+}
+
 private struct WallpaperDetailView: View {
     @ObservedObject var store: WallpaperStore
+    let filter: WallpaperListFilter
+    let market: BingMarket
     let resolution: WallpaperResolution
     let fillMode: WallpaperFillMode
 
@@ -174,13 +246,13 @@ private struct WallpaperDetailView: View {
         ZStack(alignment: .top) {
             Color(nsColor: .windowBackgroundColor)
 
-            if let wallpaper = store.selectedWallpaper {
+            if let wallpaper = store.selectedWallpaper(filter: filter) {
                 VStack(spacing: 18) {
                     WallpaperPreview(wallpaper: wallpaper)
 
                     HStack(alignment: .center, spacing: 12) {
                         Button {
-                            store.selectPrevious()
+                            store.selectPrevious(filter: filter)
                         } label: {
                             Label(L10n.string("action.previous"), systemImage: "chevron.left")
                         }
@@ -189,7 +261,8 @@ private struct WallpaperDetailView: View {
                             Task {
                                 await store.setSelectedAsDesktop(
                                     resolution: resolution,
-                                    fillMode: fillMode
+                                    fillMode: fillMode,
+                                    filter: filter
                                 )
                             }
                         } label: {
@@ -202,10 +275,27 @@ private struct WallpaperDetailView: View {
                         .disabled(store.isSettingDesktop)
 
                         Button {
-                            store.selectNext()
+                            store.selectNext(filter: filter)
                         } label: {
                             Label(L10n.string("action.next"), systemImage: "chevron.right")
                         }
+
+                        Button {
+                            store.toggleFavorite(wallpaper, market: market)
+                            store.ensureSelection(for: filter)
+                        } label: {
+                            Label(
+                                store.isFavorite(wallpaper)
+                                    ? L10n.string("action.removeFavorite")
+                                    : L10n.string("action.addFavorite"),
+                                systemImage: store.isFavorite(wallpaper) ? "star.fill" : "star"
+                            )
+                        }
+                        .help(
+                            store.isFavorite(wallpaper)
+                                ? L10n.string("action.removeFavorite")
+                                : L10n.string("action.addFavorite")
+                        )
 
                         Spacer()
 
@@ -226,9 +316,34 @@ private struct WallpaperDetailView: View {
                 }
                 .padding(24)
             } else {
-                EmptyWallpapersView()
+                if filter == .favorites {
+                    EmptyFavoritesDetailView()
+                } else {
+                    EmptyWallpapersView()
+                }
             }
         }
+    }
+}
+
+private struct EmptyFavoritesDetailView: View {
+    var body: some View {
+        VStack(spacing: 18) {
+            Image(systemName: "star")
+                .font(.system(size: 42, weight: .regular))
+                .foregroundColor(.secondary)
+
+            VStack(spacing: 6) {
+                Text(L10n.string("empty.favorites.title"))
+                    .font(.title3.weight(.semibold))
+
+                Text(L10n.string("empty.favorites.subtitle"))
+                    .font(.callout)
+                    .foregroundColor(.secondary)
+            }
+        }
+        .frame(maxWidth: 420)
+        .padding(24)
     }
 }
 

@@ -34,6 +34,7 @@ struct BingWallpapersCoreSelfTest {
         try wallpaperLibraryQuarantinesDamagedJSON()
         try wallpaperLibraryPinnedCacheFileNamesIncludeAllResolutions()
         try wallpaperSnapshotRestoresBingImageMetadata()
+        try wallpaperSelectionFallsBackToFirstVisibleImage()
         try writesCacheFileIntoConfiguredDirectory()
         try detectsCachedFiles()
         try await acceptsJPEGImageResponse()
@@ -47,7 +48,7 @@ struct BingWallpapersCoreSelfTest {
         try dailyUpdateSkipsWhenAlreadyRunToday()
         try dailyUpdateCheckDelayIncludesClampedRandomOffset()
 
-        print("BingWallpapersCoreSelfTest: 41 tests passed")
+        print("BingWallpapersCoreSelfTest: 42 tests passed")
     }
 
     private static func decodesBingArchiveAndBuildsHighResolutionURLs() throws {
@@ -561,6 +562,29 @@ struct BingWallpapersCoreSelfTest {
         try expect(snapshot.id == image.id, "snapshot should retain image identity")
         try expect(restoredImage == image, "snapshot should restore a BingImage for cache and preview reuse")
         try expect(snapshot.market == .australia, "snapshot should retain market context")
+    }
+
+    private static func wallpaperSelectionFallsBackToFirstVisibleImage() throws {
+        let archiveImage = try cacheFixtureImage()
+        let favoriteSnapshotImage = BingImage(
+            startDate: "20260514",
+            url: "/th?id=OHR.FavoriteOnly_1366x768.jpg",
+            urlBase: "/th?id=OHR.FavoriteOnly",
+            copyright: "Favorite-only fixture",
+            copyrightLink: nil,
+            title: "Favorite Only",
+            hash: "favorite-only-hash"
+        )
+
+        let selectedImage = BingImageSelection.selectedImage(
+            in: [favoriteSnapshotImage],
+            selectedID: archiveImage.id
+        )
+
+        try expect(
+            selectedImage?.id == favoriteSnapshotImage.id,
+            "favorite filter should fall back to the first snapshot when selected ID belongs to the archive list"
+        )
     }
 
     private static func writesCacheFileIntoConfiguredDirectory() throws {

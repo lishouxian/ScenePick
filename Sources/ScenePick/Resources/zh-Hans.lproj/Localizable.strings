@@ -12,6 +12,8 @@
 "action.next" = "下一张";
 "action.setDesktop" = "设为桌面";
 "action.source" = "来源";
+"action.addFavorite" = "加入收藏";
+"action.removeFavorite" = "取消收藏";
 
 "menu.openApp" = "打开拾景";
 "menu.updateDaily" = "每日自动换壁纸";
@@ -32,12 +34,17 @@
 "language.simplifiedChinese" = "简体中文";
 
 "sidebar.region" = "地区";
+"sidebar.filter.label" = "壁纸列表";
+"sidebar.filter.all" = "全部";
+"sidebar.filter.favorites" = "收藏";
 "dailyUpdate.title" = "每日自动换壁纸";
 "dailyUpdate.help" = "拾景在菜单栏运行时，每天自动换成最新壁纸。";
 
 "loading.bingArchive" = "正在加载 Bing 壁纸";
 "empty.title" = "开始使用 Bing 每日壁纸";
 "empty.subtitle" = "重新加载壁纸，浏览最新精选。";
+"empty.favorites.title" = "还没有收藏";
+"empty.favorites.subtitle" = "使用星标按钮，把喜欢的壁纸保存在这里。";
 "onboarding.menuBar.title" = "菜单栏入口";
 "onboarding.menuBar.description" = "随时通过菜单栏图标重新打开拾景。";
 "onboarding.setDesktop.title" = "一键设为桌面";
@@ -56,9 +63,14 @@
 "status.downloadingWallpaper" = "正在下载%@壁纸。";
 "status.setDesktop" = "已将%@设为桌面壁纸。";
 "status.cacheCleared" = "缓存已清空。";
+"status.favoriteAdded" = "已加入收藏。";
+"status.favoriteRemoved" = "已取消收藏。";
 
 "error.selectWallpaperFirst" = "请先选择一张壁纸。";
 "error.noLatestWallpaper" = "Bing 没有返回最新壁纸。";
+"error.favoriteLibraryUnsupportedVersion" = "收藏数据由更新版本的拾景创建，本次未做修改。";
+"error.favoriteLibraryDamagedBackupCreated" = "收藏数据无法读取，已隔离备份。";
+"error.favoriteLibraryDamagedBackupFailed" = "收藏数据无法读取。";
 
 "wallpaper.defaultTitle" = "Bing 每日壁纸";
 

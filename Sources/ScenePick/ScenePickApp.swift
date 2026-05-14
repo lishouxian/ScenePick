@@ -42,7 +42,9 @@ struct ScenePickApp: App {
             )
             .frame(minWidth: 1120, minHeight: 620)
             .task {
+                store.loadLibrary()
                 await store.load(market: selectedMarket)
+                store.presentLibraryLoadIssueIfNeeded()
             }
         }
         .defaultSize(width: 1240, height: 660)
