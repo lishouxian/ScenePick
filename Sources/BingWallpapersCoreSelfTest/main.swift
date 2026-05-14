@@ -29,6 +29,10 @@ struct BingWallpapersCoreSelfTest {
         try wallpaperLibraryStartsEmptyWhenFileMissing()
         try wallpaperLibraryPersistsFavoriteSnapshot()
         try wallpaperLibraryFavoriteMutationsStayUnique()
+        try wallpaperLibraryRecordsRecentWallpaper()
+        try wallpaperLibraryMovesRepeatedRecentWallpaperToTop()
+        try wallpaperLibraryLimitsRecentWallpapers()
+        try wallpaperLibraryPersistsRecentWallpapers()
         try wallpaperLibraryRejectsUnknownVersionWithoutOverwriting()
         try wallpaperLibraryRejectsMutationAfterUnknownVersion()
         try wallpaperLibraryQuarantinesDamagedJSON()
@@ -48,7 +52,7 @@ struct BingWallpapersCoreSelfTest {
         try dailyUpdateSkipsWhenAlreadyRunToday()
         try dailyUpdateCheckDelayIncludesClampedRandomOffset()
 
-        print("BingWallpapersCoreSelfTest: 42 tests passed")
+        print("BingWallpapersCoreSelfTest: 46 tests passed")
     }
 
     private static func decodesBingArchiveAndBuildsHighResolutionURLs() throws {
@@ -449,6 +453,72 @@ struct BingWallpapersCoreSelfTest {
     }
 
     @MainActor
+    private static func wallpaperLibraryRecordsRecentWallpaper() throws {
+        let fileURL = temporaryLibraryFileURL()
+        let image = try cacheFixtureImage()
+        let store = JSONWallpaperLibraryStore(fileURL: fileURL, now: fixedLibraryDate)
+
+        try store.recordRecent(image, market: .china)
+
+        let recent = try require(store.document.recentSet.first, "recent wallpaper")
+        try expect(recent.id == image.id, "recent ID should match the image")
+        try expect(recent.snapshot.market == .china, "recent market should persist")
+        try expect(recent.setAt == fixedLibraryDate(), "recent set timestamp should use current date")
+        try expect(store.document.favorites.isEmpty, "recording recent should not affect favorites")
+    }
+
+    @MainActor
+    private static func wallpaperLibraryMovesRepeatedRecentWallpaperToTop() throws {
+        let fileURL = temporaryLibraryFileURL()
+        let firstDate = Date(timeIntervalSince1970: 1_800_000_000)
+        let secondDate = Date(timeIntervalSince1970: 1_800_000_100)
+        var dates = [firstDate, firstDate, secondDate]
+        let store = JSONWallpaperLibraryStore(fileURL: fileURL) {
+            dates.removeFirst()
+        }
+        let firstImage = numberedLibraryImage(1)
+        let secondImage = numberedLibraryImage(2)
+
+        try store.recordRecent(firstImage, market: .china)
+        try store.recordRecent(secondImage, market: .china)
+        try store.recordRecent(firstImage, market: .china)
+
+        try expect(store.document.recentSet.map(\.id) == [firstImage.id, secondImage.id], "repeated recent image should move to the top without duplicating")
+        try expect(store.document.recentSet.first?.setAt == secondDate, "repeated recent image should update its timestamp")
+    }
+
+    @MainActor
+    private static func wallpaperLibraryLimitsRecentWallpapers() throws {
+        let fileURL = temporaryLibraryFileURL()
+        let store = JSONWallpaperLibraryStore(fileURL: fileURL)
+
+        for index in 0..<55 {
+            try store.recordRecent(numberedLibraryImage(index), market: .china)
+        }
+
+        try expect(store.document.recentSet.count == JSONWallpaperLibraryStore.recentLimit, "recent wallpapers should be capped")
+        try expect(store.document.recentSet.first?.id == numberedLibraryImage(54).id, "newest recent wallpaper should stay at the top")
+        try expect(store.document.recentSet.last?.id == numberedLibraryImage(5).id, "oldest recent wallpapers over the limit should be removed")
+    }
+
+    @MainActor
+    private static func wallpaperLibraryPersistsRecentWallpapers() throws {
+        let fileURL = temporaryLibraryFileURL()
+        let image = try cacheFixtureImage()
+        let store = JSONWallpaperLibraryStore(fileURL: fileURL, now: fixedLibraryDate)
+
+        try store.recordRecent(image, market: .china)
+
+        let reloadedStore = JSONWallpaperLibraryStore(fileURL: fileURL)
+        reloadedStore.load()
+
+        let recent = try require(reloadedStore.document.recentSet.first, "persisted recent wallpaper")
+        try expect(recent.id == image.id, "recent ID should persist")
+        try expect(recent.snapshot.image == image, "recent snapshot should restore the image")
+        try expect(recent.setAt == fixedLibraryDate(), "recent timestamp should persist")
+    }
+
+    @MainActor
     private static func wallpaperLibraryRejectsUnknownVersionWithoutOverwriting() throws {
         let fileURL = temporaryLibraryFileURL()
         try FileManager.default.createDirectory(
@@ -778,6 +848,18 @@ struct BingWallpapersCoreSelfTest {
         try require(
             try JSONDecoder().decode(BingArchiveResponse.self, from: cacheFixture).images.first,
             "cache fixture image"
+        )
+    }
+
+    private static func numberedLibraryImage(_ number: Int) -> BingImage {
+        BingImage(
+            startDate: String(format: "202605%02d", (number % 28) + 1),
+            url: "/th?id=OHR.Library\(number)_1366x768.jpg",
+            urlBase: "/th?id=OHR.Library\(number)",
+            copyright: "Library fixture \(number)",
+            copyrightLink: "https://www.bing.com/search?q=library+\(number)",
+            title: "Library \(number)",
+            hash: "library-hash-\(number)"
         )
     }
 

@@ -48,10 +48,16 @@ struct ScenePickLocalizationSelfTest {
         try expect(localizedString("sidebar.filter.label", bundle: bundle) == "Wallpaper List", "English wallpaper list filter label")
         try expect(localizedString("sidebar.filter.all", bundle: bundle) == "All", "English all filter")
         try expect(localizedString("sidebar.filter.favorites", bundle: bundle) == "Favorites", "English favorites filter")
+        try expect(localizedString("sidebar.filter.recent", bundle: bundle) == "Recent", "English recent filter")
         try expect(localizedString("empty.favorites.title", bundle: bundle) == "No favorites yet", "English empty favorites title")
         try expect(
             localizedString("empty.favorites.subtitle", bundle: bundle) == "Use the star button to save wallpapers here.",
             "English empty favorites subtitle"
+        )
+        try expect(localizedString("empty.recent.title", bundle: bundle) == "No recent wallpapers yet", "English empty recent title")
+        try expect(
+            localizedString("empty.recent.subtitle", bundle: bundle) == "Set a wallpaper to see recent items.",
+            "English empty recent subtitle"
         )
         try expect(localizedString("status.favoriteAdded", bundle: bundle) == "Added to favorites.", "English favorite added status")
         try expect(localizedString("status.favoriteRemoved", bundle: bundle) == "Removed from favorites.", "English favorite removed status")
@@ -101,10 +107,16 @@ struct ScenePickLocalizationSelfTest {
         try expect(localizedString("sidebar.filter.label", bundle: bundle) == "壁纸列表", "Chinese wallpaper list filter label")
         try expect(localizedString("sidebar.filter.all", bundle: bundle) == "全部", "Chinese all filter")
         try expect(localizedString("sidebar.filter.favorites", bundle: bundle) == "收藏", "Chinese favorites filter")
+        try expect(localizedString("sidebar.filter.recent", bundle: bundle) == "最近", "Chinese recent filter")
         try expect(localizedString("empty.favorites.title", bundle: bundle) == "还没有收藏", "Chinese empty favorites title")
         try expect(
             localizedString("empty.favorites.subtitle", bundle: bundle) == "使用星标按钮，把喜欢的壁纸保存在这里。",
             "Chinese empty favorites subtitle"
+        )
+        try expect(localizedString("empty.recent.title", bundle: bundle) == "还没有设置过壁纸", "Chinese empty recent title")
+        try expect(
+            localizedString("empty.recent.subtitle", bundle: bundle) == "设为桌面后，会在这里看到最近项目。",
+            "Chinese empty recent subtitle"
         )
         try expect(localizedString("status.favoriteAdded", bundle: bundle) == "已加入收藏。", "Chinese favorite added status")
         try expect(localizedString("status.favoriteRemoved", bundle: bundle) == "已取消收藏。", "Chinese favorite removed status")

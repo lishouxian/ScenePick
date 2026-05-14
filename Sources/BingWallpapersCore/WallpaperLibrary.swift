@@ -100,6 +100,7 @@ public protocol WallpaperLibraryStoring: AnyObject {
     func load()
     func setFavorite(_ image: BingImage, market: BingMarket, isFavorite: Bool) throws
     func toggleFavorite(_ image: BingImage, market: BingMarket) throws
+    func recordRecent(_ image: BingImage, market: BingMarket) throws
     func isFavorite(id: BingImage.ID) -> Bool
     func favoriteIDs() -> Set<BingImage.ID>
     func pinnedCacheFileNames(resolutions: [WallpaperResolution]) -> Set<String>
@@ -107,6 +108,8 @@ public protocol WallpaperLibraryStoring: AnyObject {
 
 @MainActor
 public final class JSONWallpaperLibraryStore: WallpaperLibraryStoring {
+    public static let recentLimit = 50
+
     public private(set) var document: WallpaperLibraryDocument
     public private(set) var loadIssue: WallpaperLibraryLoadIssue?
 
@@ -191,6 +194,25 @@ public final class JSONWallpaperLibraryStore: WallpaperLibraryStoring {
 
     public func toggleFavorite(_ image: BingImage, market: BingMarket) throws {
         try setFavorite(image, market: market, isFavorite: !isFavorite(id: image.id))
+    }
+
+    public func recordRecent(_ image: BingImage, market: BingMarket) throws {
+        if let unsupportedVersion {
+            throw WallpaperLibraryMutationError.unsupportedVersion(unsupportedVersion)
+        }
+
+        let recent = RecentWallpaper(
+            snapshot: WallpaperSnapshot(image: image, market: market),
+            setAt: now()
+        )
+        document.recentSet.removeAll { $0.id == recent.id }
+        document.recentSet.insert(recent, at: 0)
+
+        if document.recentSet.count > Self.recentLimit {
+            document.recentSet.removeSubrange(Self.recentLimit...)
+        }
+
+        try save()
     }
 
     public func isFavorite(id: BingImage.ID) -> Bool {
