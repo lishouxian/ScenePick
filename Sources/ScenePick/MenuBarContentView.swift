@@ -11,6 +11,9 @@ struct MenuBarContentView: View {
     @Binding var dailyAutoUpdateEnabled: Bool
     let openApp: () -> Void
     @State private var latestWallpaperStatus = LatestWallpaperMenuStatus.idle
+    @State private var latestWallpaperResetTask: Task<Void, Never>?
+
+    private static let latestWallpaperResetDelayNanoseconds: UInt64 = 3_000_000_000
 
     var body: some View {
         Group {
@@ -27,6 +30,7 @@ struct MenuBarContentView: View {
             }
 
             Button {
+                resetLatestWallpaperStatus()
                 Task {
                     await store.setAdjacentAsDesktop(
                         step: -1,
@@ -41,6 +45,7 @@ struct MenuBarContentView: View {
             .disabled(store.isLoading || store.isSettingDesktop)
 
             Button {
+                resetLatestWallpaperStatus()
                 Task {
                     await store.setAdjacentAsDesktop(
                         step: 1,
@@ -56,13 +61,16 @@ struct MenuBarContentView: View {
 
             Button {
                 Task {
-                    latestWallpaperStatus = .running
+                    setLatestWallpaperStatus(.running)
                     await store.setLatestAsDesktop(
                         market: market,
                         resolution: resolution,
                         fillMode: fillMode
                     )
-                    latestWallpaperStatus = store.errorMessage == nil ? .succeeded : .failed
+                    setLatestWallpaperStatus(
+                        store.errorMessage == nil ? .succeeded : .failed,
+                        resetsAutomatically: store.errorMessage == nil
+                    )
                 }
             } label: {
                 Label(latestWallpaperTitle, systemImage: latestWallpaperSystemImage)
@@ -78,6 +86,10 @@ struct MenuBarContentView: View {
             }
         }
         .id(languageRaw)
+        .onDisappear {
+            latestWallpaperResetTask?.cancel()
+            latestWallpaperResetTask = nil
+        }
     }
 
     private var latestWallpaperTitle: String {
@@ -104,6 +116,38 @@ struct MenuBarContentView: View {
             return "checkmark.circle.fill"
         }
         return "sparkles.rectangle.stack"
+    }
+
+    private func setLatestWallpaperStatus(
+        _ status: LatestWallpaperMenuStatus,
+        resetsAutomatically: Bool = false
+    ) {
+        latestWallpaperResetTask?.cancel()
+        latestWallpaperResetTask = nil
+        latestWallpaperStatus = status
+
+        guard resetsAutomatically else {
+            return
+        }
+
+        latestWallpaperResetTask = Task {
+            do {
+                try await Task.sleep(nanoseconds: Self.latestWallpaperResetDelayNanoseconds)
+            } catch {
+                return
+            }
+
+            guard !Task.isCancelled else {
+                return
+            }
+
+            latestWallpaperStatus = .idle
+            latestWallpaperResetTask = nil
+        }
+    }
+
+    private func resetLatestWallpaperStatus() {
+        setLatestWallpaperStatus(.idle)
     }
 }
 

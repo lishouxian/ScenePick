@@ -33,11 +33,17 @@
 
 "sidebar.region" = "Region";
 "dailyUpdate.title" = "Auto-Update Wallpaper Daily";
-"dailyUpdate.help" = "Automatically switch to the latest wallpaper daily while the app is running.";
+"dailyUpdate.help" = "Automatically switch to the latest wallpaper daily while ScenePick is running in the menu bar.";
 
 "loading.bingArchive" = "Loading Bing archive";
-"empty.title" = "No Wallpapers";
-"empty.subtitle" = "Reload wallpapers to load the latest picks.";
+"empty.title" = "Start with Bing daily wallpapers";
+"empty.subtitle" = "Reload wallpapers to browse the latest picks.";
+"onboarding.menuBar.title" = "Menu bar access";
+"onboarding.menuBar.description" = "Use the menu bar icon to reopen ScenePick anytime.";
+"onboarding.setDesktop.title" = "One-click desktop";
+"onboarding.setDesktop.description" = "Choose a wallpaper, then set it as your desktop from the main window or menu.";
+"onboarding.dailyUpdate.title" = "Daily auto-update";
+"onboarding.dailyUpdate.description" = "Enable daily auto-update to refresh your desktop while ScenePick stays open.";
 "preview.badge" = "Preview 1366x768";
 
 "status.ready" = "Ready.";

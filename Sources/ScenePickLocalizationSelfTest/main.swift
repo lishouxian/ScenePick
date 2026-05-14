@@ -20,6 +20,27 @@ struct ScenePickLocalizationSelfTest {
         try expect(localizedString("market.unitedStates", bundle: bundle) == "United States", "English United States label")
         try expect(localizedString("fillMode.fillScreen", bundle: bundle) == "Fill Screen", "English fill screen label")
         try expect(localizedString("fillMode.fitScreen", bundle: bundle) == "Fit Screen", "English fit screen label")
+        try expect(
+            localizedString("dailyUpdate.help", bundle: bundle) == "Automatically switch to the latest wallpaper daily while ScenePick is running in the menu bar.",
+            "English daily update help"
+        )
+        try expect(localizedString("empty.title", bundle: bundle) == "Start with Bing daily wallpapers", "English empty title")
+        try expect(localizedString("empty.subtitle", bundle: bundle) == "Reload wallpapers to browse the latest picks.", "English empty subtitle")
+        try expect(localizedString("onboarding.menuBar.title", bundle: bundle) == "Menu bar access", "English menu bar onboarding title")
+        try expect(
+            localizedString("onboarding.menuBar.description", bundle: bundle) == "Use the menu bar icon to reopen ScenePick anytime.",
+            "English menu bar onboarding description"
+        )
+        try expect(localizedString("onboarding.setDesktop.title", bundle: bundle) == "One-click desktop", "English set desktop onboarding title")
+        try expect(
+            localizedString("onboarding.setDesktop.description", bundle: bundle) == "Choose a wallpaper, then set it as your desktop from the main window or menu.",
+            "English set desktop onboarding description"
+        )
+        try expect(localizedString("onboarding.dailyUpdate.title", bundle: bundle) == "Daily auto-update", "English daily update onboarding title")
+        try expect(
+            localizedString("onboarding.dailyUpdate.description", bundle: bundle) == "Enable daily auto-update to refresh your desktop while ScenePick stays open.",
+            "English daily update onboarding description"
+        )
         try expect(localizedString("resolution.preview", bundle: bundle) == "Preview (1366x768)", "English preview quality label")
         try expect(localizedString("preview.badge", bundle: bundle) == "Preview 1366x768", "English preview badge")
     }
@@ -31,6 +52,24 @@ struct ScenePickLocalizationSelfTest {
         try expect(localizedString("market.unitedStates", bundle: bundle) == "美国", "Chinese United States label")
         try expect(localizedString("fillMode.fillScreen", bundle: bundle) == "填满屏幕", "Chinese fill screen label")
         try expect(localizedString("fillMode.fitScreen", bundle: bundle) == "适合屏幕", "Chinese fit screen label")
+        try expect(localizedString("dailyUpdate.help", bundle: bundle) == "拾景在菜单栏运行时，每天自动换成最新壁纸。", "Chinese daily update help")
+        try expect(localizedString("empty.title", bundle: bundle) == "开始使用 Bing 每日壁纸", "Chinese empty title")
+        try expect(localizedString("empty.subtitle", bundle: bundle) == "重新加载壁纸，浏览最新精选。", "Chinese empty subtitle")
+        try expect(localizedString("onboarding.menuBar.title", bundle: bundle) == "菜单栏入口", "Chinese menu bar onboarding title")
+        try expect(
+            localizedString("onboarding.menuBar.description", bundle: bundle) == "随时通过菜单栏图标重新打开拾景。",
+            "Chinese menu bar onboarding description"
+        )
+        try expect(localizedString("onboarding.setDesktop.title", bundle: bundle) == "一键设为桌面", "Chinese set desktop onboarding title")
+        try expect(
+            localizedString("onboarding.setDesktop.description", bundle: bundle) == "选择壁纸后，可在主窗口或菜单中设为桌面。",
+            "Chinese set desktop onboarding description"
+        )
+        try expect(localizedString("onboarding.dailyUpdate.title", bundle: bundle) == "每日自动换壁纸", "Chinese daily update onboarding title")
+        try expect(
+            localizedString("onboarding.dailyUpdate.description", bundle: bundle) == "开启每日自动换壁纸后，应用保持运行时会自动更新桌面。",
+            "Chinese daily update onboarding description"
+        )
         try expect(localizedString("resolution.preview", bundle: bundle) == "预览 (1366x768)", "Chinese preview quality label")
         try expect(localizedString("preview.badge", bundle: bundle) == "预览 1366x768", "Chinese preview badge")
     }

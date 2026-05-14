@@ -33,11 +33,17 @@
 
 "sidebar.region" = "地区";
 "dailyUpdate.title" = "每日自动换壁纸";
-"dailyUpdate.help" = "应用运行时，每天自动换成最新壁纸。";
+"dailyUpdate.help" = "拾景在菜单栏运行时，每天自动换成最新壁纸。";
 
 "loading.bingArchive" = "正在加载 Bing 壁纸";
-"empty.title" = "暂无壁纸";
-"empty.subtitle" = "重新加载壁纸以获取最新精选。";
+"empty.title" = "开始使用 Bing 每日壁纸";
+"empty.subtitle" = "重新加载壁纸，浏览最新精选。";
+"onboarding.menuBar.title" = "菜单栏入口";
+"onboarding.menuBar.description" = "随时通过菜单栏图标重新打开拾景。";
+"onboarding.setDesktop.title" = "一键设为桌面";
+"onboarding.setDesktop.description" = "选择壁纸后，可在主窗口或菜单中设为桌面。";
+"onboarding.dailyUpdate.title" = "每日自动换壁纸";
+"onboarding.dailyUpdate.description" = "开启每日自动换壁纸后，应用保持运行时会自动更新桌面。";
 "preview.badge" = "预览 1366x768";
 
 "status.ready" = "就绪。";
