@@ -6,8 +6,8 @@ PRODUCT_NAME="ScenePick"
 APP_NAME="ScenePick"
 DISPLAY_NAME="ScenePick"
 BUNDLE_ID="com.xian.ScenePick"
-APP_VERSION="${APP_VERSION:-1.0.5}"
-APP_BUILD="${APP_BUILD:-13}"
+APP_VERSION="${APP_VERSION:-1.0.6}"
+APP_BUILD="${APP_BUILD:-14}"
 CODESIGN_IDENTITY="${CODESIGN_IDENTITY:--}"
 
 clean_bundle_metadata() {
