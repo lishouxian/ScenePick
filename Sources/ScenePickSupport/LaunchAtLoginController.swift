@@ -20,7 +20,9 @@ public final class LaunchAtLoginController: ObservableObject {
     }
 
     public func refresh() {
-        errorMessage = nil
+        if errorMessage != nil {
+            errorMessage = nil
+        }
         refreshStatus()
     }
 
@@ -48,7 +50,10 @@ public final class LaunchAtLoginController: ObservableObject {
     }
 
     private func refreshStatus() {
-        status = service.status
+        let currentStatus = service.status
+        if status != currentStatus {
+            status = currentStatus
+        }
     }
 }
 

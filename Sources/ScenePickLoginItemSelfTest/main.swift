@@ -1,6 +1,7 @@
 import Foundation
 import ScenePickSupport
 import ServiceManagement
+import Combine
 
 @main
 @MainActor
@@ -11,8 +12,9 @@ struct ScenePickLoginItemSelfTest {
         try togglesOffWithFakeService()
         try refreshesStatusAfterRegisterFailure()
         try doesNotTreatApprovalOrUnavailableAsEnabled()
+        try repeatedRefreshWithoutStateChangeDoesNotPublishChanges()
 
-        print("ScenePickLoginItemSelfTest: 5 tests passed")
+        print("ScenePickLoginItemSelfTest: 6 tests passed")
     }
 
     private static func mapsSMAppServiceStatuses() throws {
@@ -73,6 +75,22 @@ struct ScenePickLoginItemSelfTest {
 
         try expect(!approvalController.isEnabled, "requires approval should not be treated as enabled")
         try expect(!unavailableController.isEnabled, "unavailable should not be treated as enabled")
+    }
+
+    private static func repeatedRefreshWithoutStateChangeDoesNotPublishChanges() throws {
+        let service = FakeLoginItemService(initialStatus: .disabled)
+        let controller = LaunchAtLoginController(service: service)
+        var publishedChanges = 0
+        let cancellable = controller.objectWillChange.sink {
+            publishedChanges += 1
+        }
+
+        controller.refresh()
+        controller.refresh()
+        controller.refresh()
+
+        cancellable.cancel()
+        try expect(publishedChanges == 0, "refresh should not publish when status and error are unchanged")
     }
 
     private static func expect(_ condition: @autoclosure () -> Bool, _ message: String) throws {
