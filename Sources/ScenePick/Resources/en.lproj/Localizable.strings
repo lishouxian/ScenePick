@@ -12,6 +12,8 @@
 "action.next" = "Next";
 "action.setDesktop" = "Set Desktop";
 "action.source" = "Source";
+"action.addFavorite" = "Add Favorite";
+"action.removeFavorite" = "Remove Favorite";
 
 "menu.openApp" = "Open ScenePick";
 "menu.updateDaily" = "Auto-Update Wallpaper Daily";
@@ -32,12 +34,17 @@
 "language.simplifiedChinese" = "Chinese (Simplified)";
 
 "sidebar.region" = "Region";
+"sidebar.filter.label" = "Wallpaper List";
+"sidebar.filter.all" = "All";
+"sidebar.filter.favorites" = "Favorites";
 "dailyUpdate.title" = "Auto-Update Wallpaper Daily";
 "dailyUpdate.help" = "Automatically switch to the latest wallpaper daily while ScenePick is running in the menu bar.";
 
 "loading.bingArchive" = "Loading Bing archive";
 "empty.title" = "Start with Bing daily wallpapers";
 "empty.subtitle" = "Reload wallpapers to browse the latest picks.";
+"empty.favorites.title" = "No favorites yet";
+"empty.favorites.subtitle" = "Use the star button to save wallpapers here.";
 "onboarding.menuBar.title" = "Menu bar access";
 "onboarding.menuBar.description" = "Use the menu bar icon to reopen ScenePick anytime.";
 "onboarding.setDesktop.title" = "One-click desktop";
@@ -56,9 +63,14 @@
 "status.downloadingWallpaper" = "Downloading %@ wallpaper.";
 "status.setDesktop" = "Set %@ as desktop wallpaper.";
 "status.cacheCleared" = "Cache cleared.";
+"status.favoriteAdded" = "Added to favorites.";
+"status.favoriteRemoved" = "Removed from favorites.";
 
 "error.selectWallpaperFirst" = "Select a wallpaper first.";
 "error.noLatestWallpaper" = "Bing did not return a latest wallpaper.";
+"error.favoriteLibraryUnsupportedVersion" = "Favorites data was created by a newer ScenePick version and was not changed.";
+"error.favoriteLibraryDamagedBackupCreated" = "Favorites data could not be read and was backed up.";
+"error.favoriteLibraryDamagedBackupFailed" = "Favorites data could not be read.";
 
 "wallpaper.defaultTitle" = "Bing Daily Wallpaper";
 

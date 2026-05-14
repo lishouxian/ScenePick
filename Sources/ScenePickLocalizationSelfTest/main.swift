@@ -43,6 +43,30 @@ struct ScenePickLocalizationSelfTest {
         )
         try expect(localizedString("resolution.preview", bundle: bundle) == "Preview (1366x768)", "English preview quality label")
         try expect(localizedString("preview.badge", bundle: bundle) == "Preview 1366x768", "English preview badge")
+        try expect(localizedString("action.addFavorite", bundle: bundle) == "Add Favorite", "English add favorite action")
+        try expect(localizedString("action.removeFavorite", bundle: bundle) == "Remove Favorite", "English remove favorite action")
+        try expect(localizedString("sidebar.filter.label", bundle: bundle) == "Wallpaper List", "English wallpaper list filter label")
+        try expect(localizedString("sidebar.filter.all", bundle: bundle) == "All", "English all filter")
+        try expect(localizedString("sidebar.filter.favorites", bundle: bundle) == "Favorites", "English favorites filter")
+        try expect(localizedString("empty.favorites.title", bundle: bundle) == "No favorites yet", "English empty favorites title")
+        try expect(
+            localizedString("empty.favorites.subtitle", bundle: bundle) == "Use the star button to save wallpapers here.",
+            "English empty favorites subtitle"
+        )
+        try expect(localizedString("status.favoriteAdded", bundle: bundle) == "Added to favorites.", "English favorite added status")
+        try expect(localizedString("status.favoriteRemoved", bundle: bundle) == "Removed from favorites.", "English favorite removed status")
+        try expect(
+            localizedString("error.favoriteLibraryUnsupportedVersion", bundle: bundle) == "Favorites data was created by a newer ScenePick version and was not changed.",
+            "English favorite library unsupported version error"
+        )
+        try expect(
+            localizedString("error.favoriteLibraryDamagedBackupCreated", bundle: bundle) == "Favorites data could not be read and was backed up.",
+            "English damaged favorite library backup error"
+        )
+        try expect(
+            localizedString("error.favoriteLibraryDamagedBackupFailed", bundle: bundle) == "Favorites data could not be read.",
+            "English damaged favorite library backup failed error"
+        )
     }
 
     private static func simplifiedChineseLabelsUseChineseText(scenePickBundle: Bundle) throws {
@@ -72,6 +96,30 @@ struct ScenePickLocalizationSelfTest {
         )
         try expect(localizedString("resolution.preview", bundle: bundle) == "预览 (1366x768)", "Chinese preview quality label")
         try expect(localizedString("preview.badge", bundle: bundle) == "预览 1366x768", "Chinese preview badge")
+        try expect(localizedString("action.addFavorite", bundle: bundle) == "加入收藏", "Chinese add favorite action")
+        try expect(localizedString("action.removeFavorite", bundle: bundle) == "取消收藏", "Chinese remove favorite action")
+        try expect(localizedString("sidebar.filter.label", bundle: bundle) == "壁纸列表", "Chinese wallpaper list filter label")
+        try expect(localizedString("sidebar.filter.all", bundle: bundle) == "全部", "Chinese all filter")
+        try expect(localizedString("sidebar.filter.favorites", bundle: bundle) == "收藏", "Chinese favorites filter")
+        try expect(localizedString("empty.favorites.title", bundle: bundle) == "还没有收藏", "Chinese empty favorites title")
+        try expect(
+            localizedString("empty.favorites.subtitle", bundle: bundle) == "使用星标按钮，把喜欢的壁纸保存在这里。",
+            "Chinese empty favorites subtitle"
+        )
+        try expect(localizedString("status.favoriteAdded", bundle: bundle) == "已加入收藏。", "Chinese favorite added status")
+        try expect(localizedString("status.favoriteRemoved", bundle: bundle) == "已取消收藏。", "Chinese favorite removed status")
+        try expect(
+            localizedString("error.favoriteLibraryUnsupportedVersion", bundle: bundle) == "收藏数据由更新版本的拾景创建，本次未做修改。",
+            "Chinese favorite library unsupported version error"
+        )
+        try expect(
+            localizedString("error.favoriteLibraryDamagedBackupCreated", bundle: bundle) == "收藏数据无法读取，已隔离备份。",
+            "Chinese damaged favorite library backup error"
+        )
+        try expect(
+            localizedString("error.favoriteLibraryDamagedBackupFailed", bundle: bundle) == "收藏数据无法读取。",
+            "Chinese damaged favorite library backup failed error"
+        )
     }
 
     private static func languageLookupIsCaseInsensitive(scenePickBundle: Bundle) throws {
