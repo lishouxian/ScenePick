@@ -8,8 +8,18 @@ struct BingWallpapersCoreSelfTest {
         try usesCopyrightDescriptionWhenBingReturnsPlaceholderTitle()
         try fileNameIsStableAndSafeForCache()
         try fileNameIncludesImageIdentityToAvoidCrossMarketCollisions()
+        try defaultArchiveSessionUsesShortRequestTimeout()
         try archiveURLUsesBingArchiveEndpointAndClampsCount()
         try archiveURLClampsOffsetToBingLimit()
+        try await fetchAvailableArchiveCombinesLatestAndOlderImages()
+        try await fetchAvailableArchiveFallsBackWhenOlderArchiveIsEmpty()
+        try await fetchAvailableArchiveFallsBackWhenOlderArchiveReturnsHTTPError()
+        try await fetchAvailableArchiveFallsBackWhenOlderArchiveFailsNetwork()
+        try await fetchAvailableArchiveFallsBackWhenOlderArchiveCannotDecode()
+        try await fetchAvailableArchivePropagatesOlderArchiveCancellation()
+        try await fetchAvailableArchiveSkipsOlderRequestWhenLatestPageIsPartial()
+        try await fetchAvailableArchivePropagatesLatestHTTPFailure()
+        try await fetchAvailableArchivePropagatesLatestDecodeFailure()
         try writesCacheFileIntoConfiguredDirectory()
         try detectsCachedFiles()
         try await acceptsJPEGImageResponse()
@@ -23,7 +33,7 @@ struct BingWallpapersCoreSelfTest {
         try dailyUpdateSkipsWhenAlreadyRunToday()
         try dailyUpdateCheckDelayIncludesClampedRandomOffset()
 
-        print("BingWallpapersCoreSelfTest: 18 tests passed")
+        print("BingWallpapersCoreSelfTest: 28 tests passed")
     }
 
     private static func decodesBingArchiveAndBuildsHighResolutionURLs() throws {
@@ -86,6 +96,19 @@ struct BingWallpapersCoreSelfTest {
         try expect(first.fileName(resolution: .preview) != second.fileName(resolution: .preview), "cache file names should not collide")
     }
 
+    private static func defaultArchiveSessionUsesShortRequestTimeout() throws {
+        let session = BingWallpaperService.defaultSession()
+
+        try expect(
+            session.configuration.timeoutIntervalForRequest == BingWallpaperService.defaultRequestTimeout,
+            "default Bing archive session should use explicit request timeout"
+        )
+        try expect(
+            session.configuration.timeoutIntervalForRequest <= 15,
+            "Bing archive request timeout should not use URLSession's default 60s"
+        )
+    }
+
     private static func archiveURLUsesBingArchiveEndpointAndClampsCount() throws {
         let url = try BingWallpaperService.archiveURL(
             market: .china,
@@ -125,6 +148,148 @@ struct BingWallpapersCoreSelfTest {
         )
 
         try expect(queryItems["idx"] == "7", "archive offset upper clamp")
+    }
+
+    private static func fetchAvailableArchiveCombinesLatestAndOlderImages() async throws {
+        let service = BingWallpaperService(
+            session: URLSession.stubbedArchive(
+                latest: .json(archiveData(prefix: "latest", count: 8)),
+                older: .json(archiveData(prefix: "older", count: 8))
+            )
+        )
+
+        let images = try await service.fetchAvailableArchive(market: .china)
+
+        try expect(images.count == 16, "available archive should combine latest and older pages")
+    }
+
+    private static func fetchAvailableArchiveFallsBackWhenOlderArchiveIsEmpty() async throws {
+        let service = BingWallpaperService(
+            session: URLSession.stubbedArchive(
+                latest: .json(archiveData(prefix: "latest", count: 8)),
+                older: .json(emptyArchiveData)
+            )
+        )
+
+        let images = try await service.fetchAvailableArchive(market: .china)
+
+        try expect(images.count == 8, "available archive should fall back to latest when older page is empty")
+        try expect(images.allSatisfy { $0.id.contains("latest") }, "fallback images should come from latest page")
+    }
+
+    private static func fetchAvailableArchiveFallsBackWhenOlderArchiveReturnsHTTPError() async throws {
+        let service = BingWallpaperService(
+            session: URLSession.stubbedArchive(
+                latest: .json(archiveData(prefix: "latest", count: 8)),
+                older: .json(archiveData(prefix: "older", count: 8), statusCode: 500)
+            )
+        )
+
+        let images = try await service.fetchAvailableArchive(market: .china)
+
+        try expect(images.count == 8, "available archive should fall back to latest when older page returns HTTP error")
+    }
+
+    private static func fetchAvailableArchiveFallsBackWhenOlderArchiveFailsNetwork() async throws {
+        let service = BingWallpaperService(
+            session: URLSession.stubbedArchive(
+                latest: .json(archiveData(prefix: "latest", count: 8)),
+                older: .failure(URLError(.notConnectedToInternet))
+            )
+        )
+
+        let images = try await service.fetchAvailableArchive(market: .china)
+
+        try expect(images.count == 8, "available archive should fall back to latest when older page fails network")
+    }
+
+    private static func fetchAvailableArchiveFallsBackWhenOlderArchiveCannotDecode() async throws {
+        let service = BingWallpaperService(
+            session: URLSession.stubbedArchive(
+                latest: .json(archiveData(prefix: "latest", count: 8)),
+                older: .json(Data("not json".utf8))
+            )
+        )
+
+        let images = try await service.fetchAvailableArchive(market: .china)
+
+        try expect(images.count == 8, "available archive should fall back to latest when older page cannot decode")
+    }
+
+    private static func fetchAvailableArchivePropagatesOlderArchiveCancellation() async throws {
+        URLProtocolStub.reset()
+        let service = BingWallpaperService(
+            session: URLSession.stubbedArchive(
+                latest: .json(archiveData(prefix: "latest", count: 8)),
+                older: .neverCompletes()
+            )
+        )
+        let task = Task {
+            try await service.fetchAvailableArchive(market: .china)
+        }
+
+        var attempts = 0
+        while !URLProtocolStub.requestedOffsets.contains("7") {
+            guard attempts < 100 else {
+                throw TestFailure("available archive should request older page before cancellation")
+            }
+            attempts += 1
+            try await Task.sleep(nanoseconds: 10_000_000)
+        }
+        task.cancel()
+
+        do {
+            _ = try await task.value
+            throw TestFailure("available archive should propagate older page cancellation")
+        } catch is CancellationError {
+        } catch {
+            try expect((error as? URLError)?.code == .cancelled, "available archive should propagate URL cancellation")
+        }
+    }
+
+    private static func fetchAvailableArchiveSkipsOlderRequestWhenLatestPageIsPartial() async throws {
+        URLProtocolStub.reset()
+        let service = BingWallpaperService(
+            session: URLSession.stubbedArchive(
+                latest: .json(archiveData(prefix: "latest", count: 3)),
+                older: .json(archiveData(prefix: "older", count: 8))
+            )
+        )
+
+        let images = try await service.fetchAvailableArchive(market: .china)
+
+        try expect(images.count == 3, "available archive should return partial latest page directly")
+        try expect(URLProtocolStub.requestedOffsets == ["0"], "available archive should not request older page after partial latest page")
+    }
+
+    private static func fetchAvailableArchivePropagatesLatestHTTPFailure() async throws {
+        let service = BingWallpaperService(
+            session: URLSession.stubbedArchive(
+                latest: .json(archiveData(prefix: "latest", count: 8), statusCode: 500),
+                older: .json(archiveData(prefix: "older", count: 8))
+            )
+        )
+
+        do {
+            _ = try await service.fetchAvailableArchive(market: .china)
+            throw TestFailure("available archive should propagate latest page HTTP failure")
+        } catch BingWallpaperError.httpStatus(500) {
+        }
+    }
+
+    private static func fetchAvailableArchivePropagatesLatestDecodeFailure() async throws {
+        let service = BingWallpaperService(
+            session: URLSession.stubbedArchive(
+                latest: .json(Data("not json".utf8)),
+                older: .json(archiveData(prefix: "older", count: 8))
+            )
+        )
+
+        do {
+            _ = try await service.fetchAvailableArchive(market: .china)
+            throw TestFailure("available archive should propagate latest page failure")
+        } catch is DecodingError {
+        }
     }
 
     private static func writesCacheFileIntoConfiguredDirectory() throws {
@@ -339,6 +504,37 @@ struct BingWallpapersCoreSelfTest {
         return data
     }
 
+    private static func archiveData(prefix: String, count: Int) -> Data {
+        let images = (0..<count).map { index in
+            """
+            {
+              "startdate": "202605\(String(format: "%02d", index + 1))",
+              "url": "/th?id=OHR.\(prefix)\(index)_1366x768.jpg",
+              "urlbase": "/th?id=OHR.\(prefix)\(index)",
+              "copyright": "\(prefix) fixture \(index)",
+              "copyrightlink": "https://www.bing.com/search?q=\(prefix)\(index)",
+              "title": "\(prefix) \(index)",
+              "hsh": "\(prefix)-hash-\(index)"
+            }
+            """
+        }
+        .joined(separator: ",")
+
+        return Data("""
+        {
+          "images": [
+            \(images)
+          ]
+        }
+        """.utf8)
+    }
+
+    private static let emptyArchiveData = Data("""
+    {
+      "images": []
+    }
+    """.utf8)
+
     private static var utcCalendar: Calendar {
         var calendar = Calendar(identifier: .gregorian)
         calendar.timeZone = TimeZone(secondsFromGMT: 0)!
@@ -443,9 +639,15 @@ struct BingWallpapersCoreSelfTest {
 }
 
 private final class URLProtocolStub: URLProtocol {
-    nonisolated(unsafe) static var data = Data()
-    nonisolated(unsafe) static var contentType: String?
-    nonisolated(unsafe) static var statusCode = 200
+    nonisolated(unsafe) static var defaultResponse = StubbedResponse(data: Data())
+    nonisolated(unsafe) static var responsesByOffset: [String: StubbedResponse] = [:]
+    nonisolated(unsafe) static var requestedOffsets: [String] = []
+
+    static func reset() {
+        defaultResponse = StubbedResponse(data: Data())
+        responsesByOffset = [:]
+        requestedOffsets = []
+    }
 
     override class func canInit(with request: URLRequest) -> Bool {
         true
@@ -456,25 +658,119 @@ private final class URLProtocolStub: URLProtocol {
     }
 
     override func startLoading() {
-        let response = HTTPURLResponse(
+        let offset = request.url
+            .flatMap { URLComponents(url: $0, resolvingAgainstBaseURL: false) }?
+            .queryItems?
+            .first { $0.name == "idx" }?
+            .value ?? "default"
+        Self.requestedOffsets.append(offset)
+
+        let stubbedResponse = Self.responsesByOffset[offset] ?? Self.defaultResponse
+        if let error = stubbedResponse.error {
+            client?.urlProtocol(self, didFailWithError: error)
+            return
+        }
+
+        if stubbedResponse.neverCompletes {
+            return
+        }
+
+        let httpResponse = HTTPURLResponse(
             url: request.url!,
-            statusCode: Self.statusCode,
+            statusCode: stubbedResponse.statusCode,
             httpVersion: nil,
-            headerFields: Self.contentType.map { ["Content-Type": $0] }
+            headerFields: stubbedResponse.contentType.map { ["Content-Type": $0] }
         )!
-        client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
-        client?.urlProtocol(self, didLoad: Self.data)
+
+        client?.urlProtocol(self, didReceive: httpResponse, cacheStoragePolicy: .notAllowed)
+        client?.urlProtocol(self, didLoad: stubbedResponse.data)
         client?.urlProtocolDidFinishLoading(self)
     }
 
     override func stopLoading() {}
 }
 
+private struct StubbedResponse {
+    let data: Data
+    let statusCode: Int
+    let contentType: String?
+    let error: Error?
+    let neverCompletes: Bool
+
+    init(
+        data: Data,
+        statusCode: Int = 200,
+        contentType: String? = nil,
+        error: Error? = nil,
+        neverCompletes: Bool = false
+    ) {
+        self.data = data
+        self.statusCode = statusCode
+        self.contentType = contentType
+        self.error = error
+        self.neverCompletes = neverCompletes
+    }
+
+    static func json(
+        _ data: Data,
+        statusCode: Int = 200
+    ) -> StubbedResponse {
+        StubbedResponse(
+            data: data,
+            statusCode: statusCode,
+            contentType: "application/json",
+            error: nil
+        )
+    }
+
+    static func image(
+        _ data: Data,
+        contentType: String? = nil
+    ) -> StubbedResponse {
+        StubbedResponse(
+            data: data,
+            statusCode: 200,
+            contentType: contentType,
+            error: nil
+        )
+    }
+
+    static func failure(_ error: Error) -> StubbedResponse {
+        StubbedResponse(
+            data: Data(),
+            statusCode: 200,
+            contentType: nil,
+            error: error
+        )
+    }
+
+    static func neverCompletes() -> StubbedResponse {
+        StubbedResponse(
+            data: Data(),
+            neverCompletes: true
+        )
+    }
+}
+
 private extension URLSession {
     static func stubbed(data: Data, contentType: String? = nil) -> URLSession {
-        URLProtocolStub.data = data
-        URLProtocolStub.contentType = contentType
-        URLProtocolStub.statusCode = 200
+        URLProtocolStub.reset()
+        URLProtocolStub.defaultResponse = .image(data, contentType: contentType)
+
+        let configuration = URLSessionConfiguration.ephemeral
+        configuration.protocolClasses = [URLProtocolStub.self]
+        return URLSession(configuration: configuration)
+    }
+
+    static func stubbedArchive(
+        latest: StubbedResponse,
+        older: StubbedResponse
+    ) -> URLSession {
+        URLProtocolStub.reset()
+        URLProtocolStub.responsesByOffset = [
+            "0": latest,
+            "7": older
+        ]
 
         let configuration = URLSessionConfiguration.ephemeral
         configuration.protocolClasses = [URLProtocolStub.self]
