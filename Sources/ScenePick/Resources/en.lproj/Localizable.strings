@@ -40,6 +40,14 @@
 "sidebar.filter.recent" = "Recent";
 "dailyUpdate.title" = "Auto-Update Wallpaper Daily";
 "dailyUpdate.help" = "Automatically switch to the latest wallpaper daily while ScenePick is running in the menu bar.";
+"launchAtLogin.title" = "Open at Login";
+"launchAtLogin.help" = "Recommended with daily auto-update.";
+"launchAtLogin.status.enabled" = "Enabled. ScenePick will open when you log in.";
+"launchAtLogin.status.disabled" = "Off.";
+"launchAtLogin.status.requiresApproval" = "Needs approval in System Settings.";
+"launchAtLogin.status.unavailable" = "Unavailable for this app build.";
+"launchAtLogin.status.updating" = "Updating login item...";
+"launchAtLogin.error" = "Could not update login item: %@";
 
 "loading.bingArchive" = "Loading Bing archive";
 "empty.title" = "Start with Bing daily wallpapers";

@@ -24,6 +24,29 @@ struct ScenePickLocalizationSelfTest {
             localizedString("dailyUpdate.help", bundle: bundle) == "Automatically switch to the latest wallpaper daily while ScenePick is running in the menu bar.",
             "English daily update help"
         )
+        try expect(localizedString("launchAtLogin.title", bundle: bundle) == "Open at Login", "English launch at login title")
+        try expect(localizedString("launchAtLogin.help", bundle: bundle) == "Recommended with daily auto-update.", "English launch at login help")
+        try expect(
+            localizedString("launchAtLogin.status.enabled", bundle: bundle) == "Enabled. ScenePick will open when you log in.",
+            "English launch at login enabled status"
+        )
+        try expect(localizedString("launchAtLogin.status.disabled", bundle: bundle) == "Off.", "English launch at login disabled status")
+        try expect(
+            localizedString("launchAtLogin.status.requiresApproval", bundle: bundle) == "Needs approval in System Settings.",
+            "English launch at login approval status"
+        )
+        try expect(
+            localizedString("launchAtLogin.status.unavailable", bundle: bundle) == "Unavailable for this app build.",
+            "English launch at login unavailable status"
+        )
+        try expect(
+            localizedString("launchAtLogin.status.updating", bundle: bundle) == "Updating login item...",
+            "English launch at login updating status"
+        )
+        try expect(
+            localizedString("launchAtLogin.error", bundle: bundle) == "Could not update login item: %@",
+            "English launch at login error"
+        )
         try expect(localizedString("empty.title", bundle: bundle) == "Start with Bing daily wallpapers", "English empty title")
         try expect(localizedString("empty.subtitle", bundle: bundle) == "Reload wallpapers to browse the latest picks.", "English empty subtitle")
         try expect(localizedString("onboarding.menuBar.title", bundle: bundle) == "Menu bar access", "English menu bar onboarding title")
@@ -83,6 +106,26 @@ struct ScenePickLocalizationSelfTest {
         try expect(localizedString("fillMode.fillScreen", bundle: bundle) == "填满屏幕", "Chinese fill screen label")
         try expect(localizedString("fillMode.fitScreen", bundle: bundle) == "适合屏幕", "Chinese fit screen label")
         try expect(localizedString("dailyUpdate.help", bundle: bundle) == "拾景在菜单栏运行时，每天自动换成最新壁纸。", "Chinese daily update help")
+        try expect(localizedString("launchAtLogin.title", bundle: bundle) == "开机启动", "Chinese launch at login title")
+        try expect(localizedString("launchAtLogin.help", bundle: bundle) == "建议与每日自动换壁纸配合使用。", "Chinese launch at login help")
+        try expect(
+            localizedString("launchAtLogin.status.enabled", bundle: bundle) == "已开启。登录后会自动打开拾景。",
+            "Chinese launch at login enabled status"
+        )
+        try expect(localizedString("launchAtLogin.status.disabled", bundle: bundle) == "已关闭。", "Chinese launch at login disabled status")
+        try expect(
+            localizedString("launchAtLogin.status.requiresApproval", bundle: bundle) == "需要在系统设置中批准。",
+            "Chinese launch at login approval status"
+        )
+        try expect(
+            localizedString("launchAtLogin.status.unavailable", bundle: bundle) == "当前应用构建不可用。",
+            "Chinese launch at login unavailable status"
+        )
+        try expect(
+            localizedString("launchAtLogin.status.updating", bundle: bundle) == "正在更新登录项...",
+            "Chinese launch at login updating status"
+        )
+        try expect(localizedString("launchAtLogin.error", bundle: bundle) == "无法更新登录项：%@", "Chinese launch at login error")
         try expect(localizedString("empty.title", bundle: bundle) == "开始使用 Bing 每日壁纸", "Chinese empty title")
         try expect(localizedString("empty.subtitle", bundle: bundle) == "重新加载壁纸，浏览最新精选。", "Chinese empty subtitle")
         try expect(localizedString("onboarding.menuBar.title", bundle: bundle) == "菜单栏入口", "Chinese menu bar onboarding title")

@@ -13,6 +13,10 @@ let package = Package(
             name: "BingWallpapersCore",
             targets: ["BingWallpapersCore"]
         ),
+        .library(
+            name: "ScenePickSupport",
+            targets: ["ScenePickSupport"]
+        ),
         .executable(
             name: "ScenePick",
             targets: ["ScenePick"]
@@ -20,6 +24,10 @@ let package = Package(
         .executable(
             name: "BingWallpapersCoreSelfTest",
             targets: ["BingWallpapersCoreSelfTest"]
+        ),
+        .executable(
+            name: "ScenePickLoginItemSelfTest",
+            targets: ["ScenePickLoginItemSelfTest"]
         )
     ],
     targets: [
@@ -27,14 +35,21 @@ let package = Package(
             name: "BingWallpapersCore",
             resources: [.process("Resources")]
         ),
+        .target(
+            name: "ScenePickSupport"
+        ),
         .executableTarget(
             name: "ScenePick",
-            dependencies: ["BingWallpapersCore"],
+            dependencies: ["BingWallpapersCore", "ScenePickSupport"],
             resources: [.process("Resources")]
         ),
         .executableTarget(
             name: "BingWallpapersCoreSelfTest",
             dependencies: ["BingWallpapersCore"]
+        ),
+        .executableTarget(
+            name: "ScenePickLoginItemSelfTest",
+            dependencies: ["ScenePickSupport"]
         ),
         .executableTarget(
             name: "ScenePickLocalizationSelfTest",

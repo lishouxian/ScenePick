@@ -40,6 +40,9 @@ jobs:
           export APP_VERSION APP_BUILD
           make dist
 
+      - name: Verify app bundle
+        run: ./Scripts/verify-app-bundle.sh Build/ScenePick.app
+
       - name: Verify release checksums
         run: |
           cd Dist
